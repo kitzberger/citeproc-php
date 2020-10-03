@@ -7,13 +7,16 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc;
+namespace Seboettg\CiteProc\Test;
 
 use PHPUnit\Framework\TestCase;
+use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode as Mode;
+use Seboettg\CiteProc\Exception\CiteProcException;
+use function Seboettg\CiteProc\loadStyleSheet;
 
 class CiteProcTest extends TestCase
 {
-
     use TestSuiteTestCaseTrait;
 
     /**
@@ -63,8 +66,9 @@ class CiteProcTest extends TestCase
 
     public function testRenderCssStyle()
     {
-        $style = StyleSheet::loadStyleSheet("international-journal-of-humanoid-robotics");
+        $style = loadStyleSheet("international-journal-of-humanoid-robotics");
         $citeProc = new CiteProc($style);
+        $citeProc->init();
         $cssStyles = $citeProc->renderCssStyles();
 
         $this->assertTrue(strpos($cssStyles, "csl-left-margin") !== false);
@@ -73,7 +77,7 @@ class CiteProcTest extends TestCase
 
     public function testRenderCssStyleHangingIndent()
     {
-        $style = StyleSheet::loadStyleSheet("din-1505-2");
+        $style = loadStyleSheet("din-1505-2");
         $citeProc = new CiteProc($style);
         $cssStyles = $citeProc->renderCssStyles();
         $this->assertTrue(strpos($cssStyles, "csl-entry") !== false);
@@ -82,7 +86,7 @@ class CiteProcTest extends TestCase
 
     public function testRenderCssStyleLineAndEntrySpacing()
     {
-        $style = StyleSheet::loadStyleSheet("harvard-north-west-university");
+        $style = loadStyleSheet("harvard-north-west-university");
         $citeProc = new CiteProc($style);
         $cssStyles = $citeProc->renderCssStyles();
         $this->assertTrue(strpos($cssStyles, "csl-entry") !== false);
@@ -92,7 +96,7 @@ class CiteProcTest extends TestCase
 
     public function testGetInfo()
     {
-        $style = StyleSheet::loadStyleSheet("harvard-north-west-university");
+        $style = loadStyleSheet("harvard-north-west-university");
         $citeProc = new CiteProc($style);
         $citeProc->init();
         $info = CiteProc::getContext()->getInfo();
@@ -100,9 +104,12 @@ class CiteProcTest extends TestCase
         $this->assertEquals("North-West University - Harvard", $info->getTitle());
     }
 
+    /**
+     * @throws CiteProcException
+     */
     public function testFilterCitations()
     {
-        $style = StyleSheet::loadStyleSheet("harvard-north-west-university");
+        $style = loadStyleSheet("harvard-north-west-university");
         $citeProc = new CiteProc($style);
 
         $dataString = '[
@@ -150,18 +157,19 @@ class CiteProcTest extends TestCase
             }
         ]';
 
-        $actual = $citeProc->render(json_decode($dataString), "citation");
+        $actual = $citeProc->render(json_decode($dataString), Mode::CITATION());
         $expected = '(Doe, 2011; Doe, 2012; Doe, 2012)';
         $this->assertEquals($expected, $actual);
 
         $filter = '[{"id": "ITEM-1"}]';
-        $actualFiltered = $citeProc->render(json_decode($dataString), "citation", json_decode($filter));
+        $actualFiltered = $citeProc->render(json_decode($dataString), Mode::CITATION(), json_decode($filter));
         $expectedFiltered = '(Doe, 2012)';
         $this->assertEquals($actualFiltered, $expectedFiltered);
-
-        $citeProc = new CiteProc(StyleSheet::loadStyleSheet("elsevier-vancouver"));
-
-        $actualFilteredElsevier = $citeProc->render(json_decode($dataString), "citation", json_decode('[{"id": "ITEM-2"}]'));
+        $citeProc->setStyleSheet(loadStyleSheet("elsevier-vancouver"));
+        $actualFilteredElsevier = $citeProc->render(
+            json_decode($dataString),
+            Mode::CITATION(),
+            json_decode('[{"id": "ITEM-2"}]'));
         $expectedFilteredElsevier = '[2]';
         $this->assertEquals($actualFilteredElsevier, $expectedFilteredElsevier);
     }
@@ -169,7 +177,7 @@ class CiteProcTest extends TestCase
 
     public function testRenderCitationNumberResultAsArray()
     {
-        $style = StyleSheet::loadStyleSheet("elsevier-vancouver");
+        $style = loadStyleSheet("elsevier-vancouver");
         $citeProc = new CiteProc($style);
         $result = $citeProc->render(json_decode("
         [
@@ -188,7 +196,7 @@ class CiteProcTest extends TestCase
                 \"title\": \"Book 3\",
                 \"type\": \"book\"
             }
-        ]"), "citation", json_decode("
+        ]"), Mode::CITATION(), json_decode("
         [
             [
                 {

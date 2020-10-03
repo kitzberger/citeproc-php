@@ -40,9 +40,7 @@ trait AffixesTrait
      */
     protected function initAffixesAttributes(SimpleXMLElement $node)
     {
-        /** @var SimpleXMLElement $attribute */
         foreach ($node->attributes() as $attribute) {
-            /** @var string $name */
             $name = (string) $attribute->getName();
             $value = (string) $attribute;
 

@@ -34,7 +34,7 @@ function loadFixtures($filter, $ignore = null)
     }
 
     if (!empty($ignore)) {
-        return array_filter($files, function($value) use ($ignore) {
+        return array_filter($files, function ($value) use ($ignore) {
             foreach ($ignore as $filter) {
                 if (strpos($value, $filter) !== false) {
                     return false;

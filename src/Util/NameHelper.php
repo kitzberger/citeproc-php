@@ -132,7 +132,7 @@ class NameHelper
             if (is_callable($function)) {
                 return $function($nameItem, $formattedName);
             }
-        } elseif (array_key_exists($mode = CiteProc::getContext()->getMode(), $markupExtension)) {
+        } elseif (array_key_exists($mode = CiteProc::getContext()->getMode()->getValue(), $markupExtension)) {
             if (array_key_exists($nameVar, $markupExtension[$mode])) {
                 $function = $markupExtension[$mode][$nameVar];
                 if (is_callable($function)) {

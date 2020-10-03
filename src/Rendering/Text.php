@@ -11,7 +11,7 @@ namespace Seboettg\CiteProc\Rendering;
 
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\CiteProcException;
-use Seboettg\CiteProc\RenderingState;
+use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Styles\AffixesTrait;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
 use Seboettg\CiteProc\Styles\DisplayTrait;

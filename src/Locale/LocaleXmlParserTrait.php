@@ -69,7 +69,6 @@ trait LocaleXmlParserTrait
      */
     private function parseXml(SimpleXMLElement $locale)
     {
-        /** @var SimpleXMLElement $node */
         foreach ($locale as $node) {
             switch ($node->getName()) {
                 case 'style-options':
@@ -86,7 +85,6 @@ trait LocaleXmlParserTrait
                     $this->termsXml->add('terms', $node);
                     $plural = ['single', 'multiple'];
 
-                    /** @var SimpleXMLElement $child */
                     foreach ($node->children() as $child) {
                         $term = new Term();
 
@@ -97,7 +95,6 @@ trait LocaleXmlParserTrait
                         $subChildren = $child->children();
                         $count = $subChildren->count();
                         if ($count > 0) {
-                            /** @var SimpleXMLElement $subChild */
                             foreach ($subChildren as $subChild) {
                                 $name = $subChild->getName();
                                 $value = (string) $subChild;

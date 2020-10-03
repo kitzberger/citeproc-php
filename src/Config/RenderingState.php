@@ -7,7 +7,7 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc;
+namespace Seboettg\CiteProc\Config;
 
 use MyCLabs\Enum\Enum;
 

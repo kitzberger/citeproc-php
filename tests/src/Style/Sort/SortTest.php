@@ -7,11 +7,14 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Style\Sort;
+namespace Seboettg\CiteProc\Test\Style\Sort;
 
 use PHPUnit\Framework\TestCase;
 use Seboettg\CiteProc\CiteProc;
-use Seboettg\CiteProc\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Config\Locale;
+use Seboettg\CiteProc\Config\RenderingMode;
+use Seboettg\CiteProc\StyleSheet;
+use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
 
 class SortTest extends TestCase
 {
@@ -57,8 +60,8 @@ class SortTest extends TestCase
             }
         ]";
         $jsonObject = json_decode($json);
-        $citeProc = new CiteProc($xml, "en-US");
-        $result = $citeProc->render($jsonObject);
+        $citeProc = new CiteProc(new StyleSheet($xml), Locale::EN_US());
+        $result = $citeProc->render($jsonObject, RenderingMode::BIBLIOGRAPHY());
 
         $expected = "<div class=\"csl-bib-body\">
   <div class=\"csl-entry\">John Doe, Book 2</div>
@@ -127,8 +130,8 @@ class SortTest extends TestCase
         ]";
 
         $jsonObject = json_decode($json);
-        $citeProc = new CiteProc($xml, "en-US");
-        $result = $citeProc->render($jsonObject);
+        $citeProc = new CiteProc(new StyleSheet($xml), Locale::EN_US());
+        $result = $citeProc->render($jsonObject, RenderingMode::BIBLIOGRAPHY());
 
         $expected = "<div class=\"csl-bib-body\">
   <div class=\"csl-entry\">Jakob Anderson, Book 4 (2003).</div>

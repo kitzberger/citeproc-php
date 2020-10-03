@@ -10,11 +10,12 @@
 namespace Seboettg\CiteProc\Locale;
 
 use InvalidArgumentException;
+use Seboettg\Citeproc\Config;
 use Seboettg\CiteProc\Exception\CiteProcException;
-use Seboettg\CiteProc\StyleSheet;
 use Seboettg\Collection\ArrayList;
 use SimpleXMLElement;
 use stdClass;
+use function Seboettg\CiteProc\loadLocales;
 
 /**
  * Class Locale
@@ -46,18 +47,18 @@ class Locale
 
     /**
      * Locale constructor.
-     * @param string $lang
+     * @param Config\Locale $localeConfig
      * @param ?string $xmlString
      * @throws CiteProcException
      */
-    public function __construct($lang = "en-US", $xmlString = null)
+    public function __construct(Config\Locale $localeConfig, $xmlString = null)
     {
-        $this->language = $lang;
+        $this->language = (string)$localeConfig;
 
         if (!empty($xmlString)) {
             $this->localeXml = new SimpleXMLElement($xmlString);
         } else {
-            $this->localeXml = new SimpleXMLElement(StyleSheet::loadLocales($lang));
+            $this->localeXml = new SimpleXMLElement(loadLocales((string)$localeConfig));
         }
 
         $this->initLocaleXmlParser();
@@ -91,7 +92,7 @@ class Locale
      * @param string $form
      * @return stdClass
      */
-    public function filter($type, $name, $form = "long")
+    public function filter(string $type, $name, string $form = "long")
     {
         if ('options' === $type) {
             return $this->option($name);

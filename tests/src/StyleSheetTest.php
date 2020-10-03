@@ -7,24 +7,27 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc;
+namespace Seboettg\CiteProc\Test;
 
 use PHPUnit\Framework\TestCase;
 use SimpleXMLElement;
+use function Seboettg\CiteProc\loadLocales;
+use function Seboettg\CiteProc\loadLocalesMetadata;
+use function Seboettg\CiteProc\loadStyleSheet;
+use Seboettg\CiteProc\Exception\CiteProcException;
 
 class StyleSheetTest extends TestCase
 {
 
     /**
      * @coversNothing
-     * @throws Exception\CiteProcException
+     * @throws CiteProcException
      */
     public function testLoadStyleSheet()
     {
 
-        $style = StyleSheet::loadStyleSheet("din-1505-2");
-        $xmlStyle = new SimpleXMLElement($style);
-        foreach ($xmlStyle as $child) {
+        $style = loadStyleSheet("din-1505-2");
+        foreach (($style)() as $child) {
             if ($child->getName() === "info") {
                 foreach ($child as $subChild) {
                     if ($subChild->getName() === "id") {
@@ -39,12 +42,12 @@ class StyleSheetTest extends TestCase
 
     /**
      * @coversNothing
-     * @throws Exception\CiteProcException
+     * @throws CiteProcException
      */
     public function testLoadLocales()
     {
 
-        $locales = StyleSheet::loadLocales("de-DE");
+        $locales = loadLocales("de-DE");
         $xmlLocales = new SimpleXMLElement($locales);
         foreach ($xmlLocales as $child) {
             if ($child->getName() === "terms") {
@@ -66,7 +69,7 @@ class StyleSheetTest extends TestCase
     public function testLoadLocalesMetadata()
     {
 
-        $metadata = StyleSheet::loadLocalesMetadata();
+        $metadata = loadLocalesMetadata();
         $this->assertObjectHasAttribute('primary-dialects', $metadata);
         $this->assertObjectHasAttribute('en', $metadata->{'primary-dialects'});
     }
@@ -77,7 +80,7 @@ class StyleSheetTest extends TestCase
     public function testLoadPrimaryDialectLocale()
     {
 
-        $locales = StyleSheet::loadLocales("de");
+        $locales = loadLocales("de");
         $xmlLocales = new SimpleXMLElement($locales);
         foreach ($xmlLocales as $child) {
             if ($child->getName() === "terms") {

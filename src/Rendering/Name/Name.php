@@ -89,9 +89,6 @@ class Name implements HasParent
 
         $this->nameParts = [];
 
-        /**
-         * @var SimpleXMLElement $child
-*/
         foreach ($node->children() as $child) {
             switch ($child->getName()) {
                 case "name-part":
@@ -485,7 +482,7 @@ class Name implements HasParent
     {
         $count = count($resultNames);
         if (!empty($this->and) && $count > 1 && empty($this->etAl)) {
-            $new = $this->and.' '.end($resultNames); // add and-prefix of the last name if "and" is defined
+            $new = $this->and . ' ' . end($resultNames); // add and-prefix of the last name if "and" is defined
             // set prefixed last name at the last position of $resultNames array
             $resultNames[count($resultNames) - 1] = $new;
         }

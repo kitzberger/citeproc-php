@@ -7,12 +7,15 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Rendering;
+namespace Seboettg\CiteProc\Test\Rendering;
 
 use PHPUnit\Framework\TestCase;
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\Locale;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\StyleSheet;
-use Seboettg\CiteProc\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
+use function Seboettg\CiteProc\loadStyleSheet;
 
 class TextTest extends TestCase
 {
@@ -69,18 +72,18 @@ EOT;
     </citation>
 </style>
 EOT;
-        $citeProc = new CiteProc($macroXml);
+        $citeProc = new CiteProc(new StyleSheet($macroXml));
 
 
 
         $this->assertEquals(
             "<i>Ein Buch</i>",
-            $citeProc->render(json_decode("[{\"title\":\"Ein Buch\", \"type\": \"book\"}]"), "citation")
+            $citeProc->render(json_decode("[{\"title\":\"Ein Buch\", \"type\": \"book\"}]"), RenderingMode::CITATION())
         );
 
         $this->assertEquals(
             "Ein Buch",
-            $citeProc->render(json_decode("[{\"title\":\"Ein Buch\", \"type\": \"thesis\"}]"), "citation")
+            $citeProc->render(json_decode("[{\"title\":\"Ein Buch\", \"type\": \"thesis\"}]"), RenderingMode::CITATION())
         );
     }
 
@@ -115,13 +118,13 @@ EOT;
                 . $renderedVariable . '</a>' : $renderedVariable;
         };
 
-        $apa = StyleSheet::loadStyleSheet("apa");
-        $citeproc = new CiteProc($apa, "de-DE",
+        $apa = loadStyleSheet("apa");
+        $citeproc = new CiteProc($apa, Locale::EN_US(),
             [
                 'title' => $enrichTitleWithLinkFunction
             ]
         );
-        $actual = $citeproc->render(json_decode($cslJson), "bibliography");
+        $actual = $citeproc->render(json_decode($cslJson), RenderingMode::BIBLIOGRAPHY());
 
         $expected = '<div class="csl-bib-body">
   <div class="csl-entry">Doe, J., &#38; Müller, A. (2001). <i><a href="https://example.org/publication/item-1" title="My Anonymous Heritage">My Anonymous Heritage</a></i>.</div>
@@ -168,11 +171,11 @@ EOT;
                 . $citeItem->URL . '</a>' : $citeItem->URL;
         };
 
-        $apa = StyleSheet::loadStyleSheet("apa");
-        $citeproc = new CiteProc($apa, "en-US", [
+        $apa = loadStyleSheet("apa");
+        $citeproc = new CiteProc($apa, Locale::EN_US(), [
             'URL' => $enrichUrlWithLinkFunction
         ]);
-        $actual = $citeproc->render(json_decode($cslJson), "bibliography");
+        $actual = $citeproc->render(json_decode($cslJson), RenderingMode::BIBLIOGRAPHY());
 
         $expected = '<div class="csl-bib-body">
   <div class="csl-entry">Doe, J., &#38; Müller, A. (2001). My Anonymous Heritage. In <i>Heritages and taxes. How to avoid responsibility.</i> (pp. 123-127). Initiative Neue Soziale Marktwirtschaft (INSM). <a href="https://example.org/publication/item-1">https://example.org/publication/item-1</a></div>
@@ -227,9 +230,9 @@ EOT;
             "title": "Two authors writing a book"
           }]';
 
-        $apa = StyleSheet::loadStyleSheet("elsevier-with-titles");
+        $apa = loadStyleSheet("elsevier-with-titles");
 
-        $citeproc = new CiteProc($apa, "en-US",
+        $citeproc = new CiteProc($apa, Locale::EN_US(),
             [
                 "bibliography" => [
                     "citation-number" => function($citeItem, $renderedVariable) {
@@ -246,7 +249,7 @@ EOT;
             ]
         );
 
-        $actual = $citeproc->render(json_decode($cslJson), "bibliography");
+        $actual = $citeproc->render(json_decode($cslJson), RenderingMode::BIBLIOGRAPHY());
 
         $expected = '<div class="csl-bib-body">
   <div class="csl-entry"><div class="csl-left-margin">[<a id="item-1" href="#item-1">1</a>]</div><div class="csl-right-inline">J. Doe III, My Anonymous Heritage, 2001.</div></div>
@@ -254,7 +257,7 @@ EOT;
 </div>';
         $this->assertEquals($expected, $actual);
 
-        $actual = $citeproc->render(json_decode($cslJson), "citation");
+        $actual = $citeproc->render(json_decode($cslJson), RenderingMode::CITATION());
 
         $expected = '[<a href="#item-1">1</a>,<a href="#ITEM-2">2</a>]';
 

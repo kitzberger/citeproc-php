@@ -10,6 +10,7 @@
 namespace Seboettg\CiteProc\Util;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\StyleSheet;
 use SimpleXMLElement;
 
 /**
@@ -54,6 +55,9 @@ class Factory
      */
     public static function create($node, $param = null)
     {
+        if ($node instanceof StyleSheet) {
+            $node = ($node)();
+        }
         $nodeClass = self::CITE_PROC_NODE_NAMESPACE.self::$nodes[$node->getName()];
         if (!class_exists($nodeClass)) {
             throw new InvalidStylesheetException("For node {$node->getName()} ".

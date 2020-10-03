@@ -10,10 +10,12 @@
 namespace Seboettg\CiteProc\Style;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Name\Name;
 use Seboettg\CiteProc\Rendering\Name\Names;
 use Seboettg\CiteProc\Root\Root;
+use Seboettg\CiteProc\StyleSheet;
 use SimpleXMLElement;
 
 /**
@@ -232,8 +234,8 @@ trait InheritableNameAttributesTrait
     {
         $context = CiteProc::getContext();
         $parentStyleElement = null;
-        if ($this instanceof  Name || $this instanceof Names) {
-            if ($context->getMode() === "bibliography") {
+        if ($this instanceof  Name || $this instanceof Names && !empty($context->getMode())) {
+            if ($context->getMode()->equals(RenderingMode::BIBLIOGRAPHY())) {
                 if ($this->isDescendantOfMacro()) {
                     $parentStyleElement = $context->getRoot();
                 } else {

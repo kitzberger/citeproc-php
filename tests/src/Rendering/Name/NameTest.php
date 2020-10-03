@@ -7,12 +7,14 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Rendering\Name;
+namespace Seboettg\CiteProc\Test\Rendering\Name;
 
 use PHPUnit\Framework\TestCase;
 use Seboettg\CiteProc\CiteProc;
-use Seboettg\CiteProc\StyleSheet;
-use Seboettg\CiteProc\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Config\RenderingMode as Mode;
+use Seboettg\CiteProc\Config\Locale;
+use function Seboettg\CiteProc\loadStyleSheet;
 
 class NameTest extends TestCase
 {
@@ -91,7 +93,7 @@ class NameTest extends TestCase
 
     public function testNameAttrAnd()
     {
-        $this->runTestSuite("nameattr_And");
+        $this->runTestSuite("nameattr_AndOnBibliographyInBibliography");
     }
 
     public function testNameAttrDelimiterPrecedesEtAl()
@@ -195,7 +197,8 @@ class NameTest extends TestCase
         $this->runTestSuite("name_namepartAffixesNameAsSortOrder");
     }
 
-    public function testNameCitationMacroNoInheritanceFromRoot() {
+    public function testNameCitationMacroNoInheritanceFromRoot()
+    {
         $this->runTestSuite("name_CitationMacroNoInheritanceFromRoot");
     }
 
@@ -230,16 +233,16 @@ class NameTest extends TestCase
             "type": "book"
         }]';
 
-        $enrichAuthorWithLinkFunction = function($authorItem, $authorName) {
+        $enrichAuthorWithLinkFunction = function ($authorItem, $authorName) {
             return isset($authorItem->id) ? '<a href="https://example.org/author/' . $authorItem->id . '" title="' . $authorName . '">'
                 . $authorName . '</a>' : $authorName;
         };
 
-        $apa = StyleSheet::loadStyleSheet("apa");
-        $citeproc = new CiteProc($apa, "de-DE", [
+        $apa = loadStyleSheet("apa");
+        $citeproc = new CiteProc($apa, Locale::DE_DE(), [
             'author' => $enrichAuthorWithLinkFunction
         ]);
-        $actual = $citeproc->render(json_decode($cslJson), "bibliography");
+        $actual = $citeproc->render(json_decode($cslJson), Mode::BIBLIOGRAPHY());
 
         $expected = '<div class="csl-bib-body">
   <div class="csl-entry"><a href="https://example.org/author/doe" title="Doe, J.">Doe, J.</a>, &#38; Müller, A. (2001). <i>My Anonymous Heritage</i>.</div>
@@ -273,27 +276,27 @@ class NameTest extends TestCase
             "type": "book"
         }]';
 
-        $enrichAuthorWithLinkFunctionBibliography = function($authorItem, $authorName) {
+        $enrichAuthorWithLinkFunctionBibliography = function ($authorItem, $authorName) {
             return isset($authorItem->id) ? '<a href="https://example.org/author/' . $authorItem->id . '" title="' . $authorName . '">'
                 . $authorName . '</a>' : $authorName;
         };
 
-        $apa = StyleSheet::loadStyleSheet("apa");
-        $citeproc = new CiteProc($apa, "de-DE", [
+        $apa = loadStyleSheet("apa");
+        $citeproc = new CiteProc($apa, Locale::DE_DE(), [
             "bibliography" => [
                 "author" => $enrichAuthorWithLinkFunctionBibliography,
-                "csl-entry" => function($item, $renderedItem) {
+                "csl-entry" => function ($item, $renderedItem) {
                     return '<a id="' . $item->id . '"></a>' . $renderedItem;
                 }
             ],
             "citation" => [
-                "csl-entry" => function($item, $renderedItem) {
+                "csl-entry" => function ($item, $renderedItem) {
                     return '<a href="#' . $item->id . '">' . $renderedItem . '</a>';
                 }
             ]
         ]);
-        $actualBibliography = $citeproc->render(json_decode($cslJson), "bibliography");
-        $actualCitation = $citeproc->render(json_decode($cslJson), "citation");
+        $actualBibliography = $citeproc->render(json_decode($cslJson), Mode::BIBLIOGRAPHY());
+        $actualCitation = $citeproc->render(json_decode($cslJson), Mode::CITATION());
         $expectedBibliography = '<div class="csl-bib-body">
   <div class="csl-entry"><a id="item-1"></a><a href="https://example.org/author/doe" title="Doe, J.">Doe, J.</a>, &#38; Müller, A. (2001). <i>My Anonymous Heritage</i>.</div>
 </div>';

@@ -7,15 +7,16 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Node\Choose\Choose;
+namespace Seboettg\CiteProc\Test\Rendering\Choose;
 
 use PHPUnit\Framework\TestCase;
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Context;
 use Seboettg\CiteProc\Exception\ClassNotFoundException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Choose\Choose;
-use Seboettg\CiteProc\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
 use SimpleXMLElement;
 
 class ChooseTest extends TestCase
@@ -36,7 +37,9 @@ class ChooseTest extends TestCase
     {
         $xml = new SimpleXMLElement($this->chooseXml[1]);
         $choose = new Choose($xml, null);
-        CiteProc::setContext(new Context());
+        $context = new Context();
+        $context->setMode(RenderingMode::BIBLIOGRAPHY());
+        CiteProc::setContext($context);
         $ret1 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität","volume":2}'));
         $ret2 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität","volume":"non-numeric value"}'));
         $ret3 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität"}'));

@@ -7,12 +7,16 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc;
+namespace Seboettg\CiteProc\Test;
 
 use Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use RuntimeException;
+use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\Locale;
 use Seboettg\CiteProc\Exception\CiteProcException;
+use Seboettg\CiteProc\Config\RenderingMode as Mode;
+use Seboettg\CiteProc\StyleSheet;
 
 trait TestSuiteTestCaseTrait
 {
@@ -39,13 +43,14 @@ trait TestSuiteTestCaseTrait
             }
 
             $testData = json_decode(file_get_contents(PHPUNIT_FIXTURES."/$testFile"));
-            $mode = $testData->mode;
-            if ($mode !== "bibliography" && $mode !== "citation") {
+            if (! Mode::isValid($testData->mode)) {
                 continue;
             }
+            $mode = new Mode($testData->mode);
 
             $expected = $testData->result;
-            $citeProc = new CiteProc($testData->csl);
+            $citeProc = new CiteProc(new StyleSheet($testData->csl), Locale::EN_US());
+            $citeProc->init();
             ++$i;
             $echo = sprintf("%03d (%s / %s): ", $i, $testFile, $mode);
             try {

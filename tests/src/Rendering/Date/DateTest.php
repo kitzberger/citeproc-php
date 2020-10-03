@@ -7,14 +7,13 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Rendering\Date;
+namespace Seboettg\CiteProc\Test\Rendering\Date;
 
 use PHPUnit\Framework\TestCase;
-use Seboettg\CiteProc\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
 
 class DateTest extends TestCase
 {
-
     use TestSuiteTestCaseTrait;
 
     public function testDateString()

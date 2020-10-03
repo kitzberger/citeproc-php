@@ -9,6 +9,8 @@
 
 namespace Seboettg\CiteProc;
 
+use Seboettg\CiteProc\Config\RenderingMode;
+use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Root\Info;
@@ -31,99 +33,61 @@ use Seboettg\Collection\ArrayList;
  */
 class Context
 {
-    /**
-     * @var ArrayList
-     */
+    /** @var ArrayList */
     private $macros;
 
-    /**
-     * @var Locale
-     */
+    /** @var Locale */
     private $locale;
 
-    /**
-     * @var Bibliography
-     */
+    /** @var Bibliography */
     private $bibliography;
 
-    /**
-     * @var Citation
-     */
+    /** @var Citation */
     private $citation;
 
-    /**
-     * @var Sort
-     */
+    /** @var Sort */
     private $sorting;
 
-    /**
-     * @var string
-     */
+    /** @var RenderingMode */
     private $mode;
 
-    /**
-     * @var DataList
-     */
+    /** @var DataList */
     private $citationData;
 
-    /**
-     * @var ArrayList
-     */
+    /** @var ArrayList */
     private $citationItems;
 
-    /**
-     * @var ArrayList
-     */
+    /** @var ArrayList */
     private $results;
 
-    /**
-     * @var Root
-     */
+    /** @var Root */
     private $root;
 
-    /**
-     * @var GlobalOptions
-     */
+    /** @var GlobalOptions */
     private $globalOptions;
 
-    /**
-     * @var BibliographyOptions
-     */
+    /** @var BibliographyOptions */
     private $bibliographySpecificOptions;
 
-    /**
-     * @var CitationOptions
-     */
+    /** @var CitationOptions */
     private $citationSpecificOptions;
 
-    /**
-     * @var RenderingState
-     */
+    /** @var RenderingState */
     private $renderingState;
 
-    /**
-     * @var CssStyle
-     */
+    /** @var CssStyle */
     private $cssStyle;
 
-    /**
-     * @var Info
-     */
+    /** @var Info */
     private $info;
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $markupExtension = [];
 
-    /**
-     * @var bool
-     */
+    /** @var bool */
     private $citationsAsArray = false;
 
-    /**
-     * @var ArrayList
-     */
+    /** @var ArrayList */
     private $citedItems;
 
     public function __construct($locale = null)
@@ -196,7 +160,7 @@ class Context
     /**
      * @param Citation $citation
      */
-    public function setCitation($citation)
+    public function setCitation(Citation $citation)
     {
         $this->citation = $citation;
     }
@@ -234,9 +198,9 @@ class Context
     }
 
     /**
-     * @param string $mode
+     * @param RenderingMode $mode
      */
-    public function setMode($mode)
+    public function setMode(RenderingMode $mode)
     {
         $this->mode = $mode;
     }
@@ -245,18 +209,18 @@ class Context
      * returns true if the render mode is set to citation
      * @return bool
      */
-    public function isModeCitation()
+    public function isModeCitation(): bool
     {
-        return $this->mode === "citation";
+        return $this->mode->equals(RenderingMode::CITATION());
     }
 
     /**
      * returns true if the render mode is set to bibliography
      * @return bool
      */
-    public function isModeBibliography()
+    public function isModeBibliography(): bool
     {
-        return $this->mode === "bibliography";
+        return $this->mode->equals(RenderingMode::BIBLIOGRAPHY());
     }
 
     /**

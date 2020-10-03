@@ -12,7 +12,7 @@ namespace Seboettg\CiteProc\Rendering;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
-use Seboettg\CiteProc\RenderingState;
+use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Style\StyleElement;
 use Seboettg\CiteProc\Styles\AffixesTrait;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;

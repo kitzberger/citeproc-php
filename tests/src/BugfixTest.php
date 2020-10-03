@@ -7,9 +7,16 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc;
+namespace Seboettg\CiteProc\Test;
 
 use PHPUnit\Framework\TestCase;
+use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
+use Seboettg\CiteProc\Config\RenderingMode as Mode;
+use Seboettg\CiteProc\Exception;
+use Seboettg\CiteProc\StyleSheet;
+use function loadFixtures;
+use function Seboettg\CiteProc\loadStyleSheet;
 
 /**
  * Class BugfixTest
@@ -18,7 +25,6 @@ use PHPUnit\Framework\TestCase;
  */
 class BugfixTest extends TestCase
 {
-
     use TestSuiteTestCaseTrait;
 
     public function testBugfixGithub36()
@@ -63,8 +69,8 @@ class BugfixTest extends TestCase
     {
         $testFiles = loadFixtures("bugfix-github-58");
         $testData = json_decode(file_get_contents(PHPUNIT_FIXTURES."/$testFiles[0]"));
-        $mode = $testData->mode;
-        $citeProc = new CiteProc($testData->csl);
+        $mode = new RenderingMode($testData->mode);
+        $citeProc = new CiteProc(new StyleSheet($testData->csl));
         $input = $testData->input;
         $result = $citeProc->render($input, $mode);
         $this->assertNotEmpty($result);
@@ -78,11 +84,11 @@ class BugfixTest extends TestCase
     {
         $style = "modern-language-association";
         $input = '[{"type": "book","accessed": {"date-parts": [["2016","01","01"]]},"publisher": "lol2","title": "lol"},{"type": "book","author": [{"given": "Daniel","suffix": "H.","family": "Nexon"},{"given": "Iver","suffix": "B.","family": "Neumann"}],"accessed": {"date-parts": [["2006","01","01"]]},"publisher": "Rowman & Littlefield","title": "Harry Potter and International Relations"}]';
-        $citeProc = new CiteProc(StyleSheet::loadStyleSheet($style));
+        $citeProc = new CiteProc(loadStyleSheet($style));
         $data = json_decode($input);
         $datum = $data[0];
         $this->assertNotTrue(isset($datum->author)); //first entry has no author
-        $result = $citeProc->render($data);
+        $result = $citeProc->render($data, Mode::BIBLIOGRAPHY());
         $this->assertNotEmpty($result);
     }
 

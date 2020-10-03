@@ -7,10 +7,10 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Rendering\Names;
+namespace Seboettg\CiteProc\Test\Rendering\Name;
 
 use PHPUnit\Framework\TestCase;
-use Seboettg\CiteProc\TestSuiteTestCaseTrait;
+use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
 
 class NamesTest extends TestCase
 {

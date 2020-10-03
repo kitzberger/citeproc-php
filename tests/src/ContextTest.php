@@ -7,10 +7,15 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc;
+namespace Seboettg\CiteProc\Test;
 
 use PHPUnit\Framework\TestCase;
+use Seboettg\CiteProc\Config\RenderingMode as Mode;
+use Seboettg\CiteProc\Config;
+use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Context;
 use Seboettg\CiteProc\Data\DataList;
+use function Seboettg\CiteProc\loadStyleSheet;
 
 class ContextTest extends TestCase
 {
@@ -30,11 +35,11 @@ class ContextTest extends TestCase
 
     public function setUp()
     {
-        $style = StyleSheet::loadStyleSheet("din-1505-2");
-        $this->citeProc = new CiteProc($style, "de-DE");
+        $style = loadStyleSheet("din-1505-2");
+        $this->citeProc = new CiteProc($style, Config\Locale::DE_DE());
         $this->citeProc->init();
-        $this->context = $this->citeProc->getContext();
-        $this->context->setMode("bibliography");
+        $this->context = $this->citeProc::getContext();
+        $this->context->setMode(Mode::BIBLIOGRAPHY());
         $dataList = new DataList(...json_decode($this->data));
         $this->context->setCitationData($dataList);
     }
@@ -45,7 +50,7 @@ class ContextTest extends TestCase
      */
     public function testGetMacros()
     {
-        $macros = $this->citeProc->getContext()->getMacros();
+        $macros = $this->citeProc::getContext()->getMacros();
         static::assertTrue(count($macros) > 0);
         foreach ($macros as $macro) {
             static::assertInstanceOf("Seboettg\\CiteProc\\Style\\Macro", $macro);
@@ -73,7 +78,7 @@ class ContextTest extends TestCase
      */
     public function testGetCitationItems()
     {
-        foreach ($this->citeProc->getContext()->getCitationData() as $item) {
+        foreach ($this->citeProc::getContext()->getCitationData() as $item) {
             static::assertNotNull($item->{'author'});
             static::assertTrue(is_array($item->{'author'}));
             static::assertNotEmpty($item->{'author'});
