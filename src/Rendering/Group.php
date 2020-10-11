@@ -93,10 +93,7 @@ class Group implements Rendering, HasParent
         foreach ($this->children as $child) {
             $elementCount++;
 
-            if (($child instanceof Text)
-                && ($child->getSource() == 'term'
-                || $child->getSource() == 'value')
-            ) {
+            if (($child instanceof Text) && in_array($child->getSource(), ['term', 'value'])) {
                 ++$terms;
             }
 

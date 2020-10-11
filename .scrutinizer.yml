@@ -1,6 +1,8 @@
 filter:
     excluded_paths:
         - 'tests/*'
+        - 'example/'
+        - 'review/'
 build:
     tests:
         override:

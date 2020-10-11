@@ -10,6 +10,7 @@
 namespace Seboettg\CiteProc\Util;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Label;
 use Seboettg\CiteProc\StyleSheet;
 use SimpleXMLElement;
 
@@ -47,24 +48,33 @@ class Factory
         "et-al"         => "\\Name\\EtAl"
     ];
 
+    private static $factories = [
+        Label::class
+    ];
+
     /**
      * @param SimpleXMLElement $node
      * @param mixed $param
      * @return mixed
      * @throws InvalidStylesheetException
      */
-    public static function create($node, $param = null)
+    public static function create(SimpleXMLElement $node, $param = null)
     {
         if ($node instanceof StyleSheet) {
             $node = ($node)();
         }
-        $nodeClass = self::CITE_PROC_NODE_NAMESPACE.self::$nodes[$node->getName()];
+        $nodeClass = self::CITE_PROC_NODE_NAMESPACE . self::$nodes[$node->getName()];
         if (!class_exists($nodeClass)) {
             throw new InvalidStylesheetException("For node {$node->getName()} ".
                 "does not exist any counterpart class \"".$nodeClass.
                 "\". The given stylesheet seems to be invalid.");
         }
-        if ($param != null) {
+
+        if (in_array($nodeClass, self::$factories)) {
+            return call_user_func([$nodeClass, "factory"], $node);
+        }
+
+        if ($param !== null) {
             return new $nodeClass($node, $param);
         }
         return new $nodeClass($node);

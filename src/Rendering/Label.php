@@ -10,9 +10,13 @@
 namespace Seboettg\CiteProc\Rendering;
 
 use Seboettg\CiteProc\CiteProc;
-use Seboettg\CiteProc\Styles\AffixesTrait;
+use Seboettg\CiteProc\Locale\Form;
+use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Styles\AffixesRenderer;
+use Seboettg\CiteProc\Styles\FormattingRenderer;
 use Seboettg\CiteProc\Styles\FormattingTrait;
-use Seboettg\CiteProc\Styles\TextCaseTrait;
+use Seboettg\CiteProc\Styles\TextCase;
+use Seboettg\CiteProc\Styles\TextCaseRenderer;
 use SimpleXMLElement;
 use stdClass;
 
@@ -24,61 +28,93 @@ use stdClass;
  */
 class Label implements Rendering
 {
-    use AffixesTrait,
-        FormattingTrait,
-        TextCaseTrait;
+    use FormattingTrait;
 
     private $variable;
 
-    /**
-     * Selects the form of the term, with allowed values:
-     *
-     *   - “long” - (default), e.g. “page”/”pages” for the “page” term
-     *   - “short” - e.g. “p.”/”pp.” for the “page” term
-     *   - “symbol” - e.g. “§”/”§§” for the “section” term
-     *
-     * @var string
-     */
-    private $form = "";
+    /** @var Form  */
+    private $form;
 
-    /**
-     * Sets pluralization of the term, with allowed values:
-     *
-     *   - “contextual” - (default), the term plurality matches that of the variable content. Content is considered
-     *     plural when it contains multiple numbers (e.g. “page 1”, “pages 1-3”, “volume 2”, “volumes 2 & 4”), or, in
-     *     the case of the “number-of-pages” and “number-of-volumes” variables, when the number is higher than 1
-     *     (“1 volume” and “3 volumes”).
-     *   - “always” - always use the plural form, e.g. “pages 1” and “pages 1-3”
-     *   - “never” - always use the singular form, e.g. “page 1” and “page 1-3”
-     *
-     * @var string
-     */
-    private $plural = "contextual";
+    /** @var Plural */
+    private $plural;
 
-    /**
-     * Label constructor.
-     * @param SimpleXMLElement $node
-     */
-    public function __construct(SimpleXMLElement $node)
+    /** @var TextCaseRenderer */
+    private $textCase;
+
+    /** @var FormattingRenderer */
+    private $formatting;
+
+    /** @var AffixesRenderer */
+    private $affixes;
+
+    /** @var Locale */
+    private $locale;
+
+    public static function factory(SimpleXMLElement $node)
     {
-        /** @var SimpleXMLElement $attribute */
+        $variable = $form = $plural = null;
+        $context = CiteProc::getContext();
+        $prefix = $suffix = $textCase = null;
+
         foreach ($node->attributes() as $attribute) {
             switch ($attribute->getName()) {
                 case "variable":
-                    $this->variable = (string) $attribute;
+                    $variable = (string) $attribute;
                     break;
                 case "form":
-                    $this->form = (string) $attribute;
+                    $form = new Form((string) $attribute);
                     break;
                 case "plural":
-                    $this->plural = (string) $attribute;
+                    $plural = new Plural((string) $attribute);
+                    break;
+                case 'prefix':
+                    $prefix = (string) $attribute;
+                    break;
+                case 'suffix':
+                    $suffix = (string) $attribute;
+                    break;
+                case 'quote':
+                    //$quote = (bool) $attribute;
+                    break;
+                case 'text-case':
+                    $textCase = new TextCase((string) $attribute);
                     break;
             }
         }
+        $locale = $context->getLocale();
+        $formatting = FormattingRenderer::factory($node);
+        $textCase = new TextCaseRenderer($textCase);
+        $affixes = AffixesRenderer::factory($context, $prefix, $suffix);
+        return new self($variable, $form, $plural, $formatting, $affixes, $textCase, $locale);
+    }
 
-        $this->initFormattingAttributes($node);
-        $this->initAffixesAttributes($node);
-        $this->initTextCaseAttributes($node);
+
+    /**
+     * Label constructor.
+     * @param string|null $variable
+     * @param Form|null $form
+     * @param Plural|null $plural
+     * @param FormattingRenderer $formatting
+     * @param AffixesRenderer $affixes
+     * @param TextCaseRenderer $textCase
+     * @param Locale $locale
+     */
+    public function __construct(
+        ?string $variable,
+        ?Form $form,
+        ?Plural $plural,
+        FormattingRenderer $formatting,
+        AffixesRenderer $affixes,
+        TextCaseRenderer $textCase,
+        Locale $locale
+    ) {
+        $this->variable = $variable;
+        $this->form = $form;
+        $this->plural = $plural;
+        $this->formatting = $formatting;
+        $this->affixes = $affixes;
+        $this->textCase = $textCase;
+        $this->locale = $locale;
     }
 
     /**
@@ -89,7 +125,7 @@ class Label implements Rendering
     public function render($data, $citationNumber = null)
     {
         $lang = (isset($data->language) && $data->language != 'en') ? $data->language : 'en';
-
+        $this->textCase->setLanguage($lang);
         $text = '';
         $variables = explode(' ', $this->variable);
         $form = !empty($this->form) ? $this->form : 'long';
@@ -118,7 +154,7 @@ class Label implements Rendering
             foreach ($variables as $variable) {
                 if (isset($data->{$variable})) {
                     $plural = $this->getPlural($data, $plural, $variable);
-                    $term = CiteProc::getContext()->getLocale()->filter('terms', $variable, $form);
+                    $term = $this->locale->filter('terms', $variable, $form);
                     $pluralForm = $term->{$plural} ?? "";
                     if (!empty($data->{$variable}) && !empty($pluralForm)) {
                         $text = $pluralForm;
@@ -128,7 +164,7 @@ class Label implements Rendering
             }
         }
 
-        return $this->formatting($text, $lang);
+        return $this->formatting($text);
     }
 
     /**
@@ -136,7 +172,7 @@ class Label implements Rendering
      * @param string $variable
      * @return string
      */
-    private function evaluateStringPluralism($str, $variable)
+    private function evaluateStringPluralism(string $str, string $variable)
     {
         $plural = 'single';
         if (!empty($str)) {
@@ -145,10 +181,10 @@ class Label implements Rendering
                 case 'chapter':
                 case 'folio':
                     $pageRegex = "/([a-zA-Z]*)([0-9]+)\s*(?:–|-)\s*([a-zA-Z]*)([0-9]+)/";
-                    $err = preg_match($pageRegex, $str, $m);
-                    if ($err !== false && count($m) == 0) {
+                    $err = preg_match($pageRegex, $str, $matches);
+                    if ($err !== false && count($matches) == 0) {
                         $plural = 'single';
-                    } elseif ($err !== false && count($m)) {
+                    } elseif ($err !== false && count($matches)) {
                         $plural = 'multiple';
                     }
                     break;
@@ -164,7 +200,7 @@ class Label implements Rendering
     /**
      * @param string $variable
      */
-    public function setVariable($variable)
+    public function setVariable(string $variable)
     {
         $this->variable = $variable;
     }
@@ -217,7 +253,7 @@ class Label implements Rendering
     /**
      * @param string $form
      */
-    public function setForm($form)
+    public function setForm(string $form)
     {
         $this->form = $form;
     }
@@ -227,7 +263,7 @@ class Label implements Rendering
      * @param $lang
      * @return string
      */
-    protected function formatting($text, $lang)
+    protected function formatting($text)
     {
         if (empty($text)) {
             return "";
@@ -237,8 +273,9 @@ class Label implements Rendering
         }
 
         $text = preg_replace("/\s&\s/", " &#38; ", $text); //replace ampersands by html entity
-        $text = $this->format($this->applyTextCase($text, $lang));
-        return $this->addAffixes($text);
+        $text = $this->textCase->render($text);
+        $text = $this->formatting->render($text);
+        return $this->affixes->render($text);
     }
 
     /**
