@@ -12,8 +12,22 @@ namespace Seboettg\CiteProc\Styles;
 
 use MyCLabs\Enum\Enum;
 
-class TextCase extends Enum
+/**
+ * @method static NONE()
+ * @method static UPPERCASE()
+ * @method static LOWERCASE()
+ * @method static SENTENCE()
+ * @method static CAPITALIZE_ALL()
+ * @method static TITLE()
+ * @method static CAPITALIZE_FIRST()
+ *
+ * Class TextCase
+ * @package Seboettg\CiteProc\Styles
+ */
+final class TextCase extends Enum
 {
+    public const NONE = 'none';
+
     public const UPPERCASE = 'uppercase';
 
     public const LOWERCASE = 'lowercase';

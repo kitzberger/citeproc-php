@@ -6,7 +6,7 @@ citation
 
 >>===== RESULT =====>>
 4-7
-<span style="text-decoration: underline;">4-7</span>
+<span style="text-decoration: underline">4-7</span>
 <<===== RESULT =====<<
 
 

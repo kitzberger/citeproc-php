@@ -15,7 +15,7 @@ use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Context;
-use Seboettg\CiteProc\Rendering\Number;
+use Seboettg\CiteProc\Rendering\Number\Number;
 use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
 use SimpleXMLElement;
 
@@ -37,7 +37,7 @@ class NumberTest extends TestCase
     public function testRenderOrdinal()
     {
 
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": 3}");
 
         $this->assertEquals("3rd", $number->render($data));
@@ -45,7 +45,7 @@ class NumberTest extends TestCase
 
     public function testRenderLongOrdinal()
     {
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="long-ordinal"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="long-ordinal"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": 3}");
 
         $this->assertEquals("third", $number->render($data));
@@ -53,7 +53,7 @@ class NumberTest extends TestCase
 
     public function testRenderRoman()
     {
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="roman"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="roman"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": 4}");
 
         $this->assertEquals("iv", $number->render($data));
@@ -64,7 +64,7 @@ class NumberTest extends TestCase
 
     public function testRenderAffixesTextCase()
     {
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="roman" text-case="uppercase" prefix="[" suffix="]"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="roman" text-case="uppercase" prefix="[" suffix="]"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": 16}");
         $this->assertEquals("[XVI]", $number->render($data));
     }
@@ -128,22 +128,22 @@ class NumberTest extends TestCase
 
     public function testRomanInputSingleNumber()
     {
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": \"IV\"}");
         $this->assertEquals("4th", $number->render($data));
 
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": \"ii\"}");
         $this->assertEquals("2nd", $number->render($data));
     }
 
     public function testRomanInputRangeNumber()
     {
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": \"IV-VI\"}");
         $this->assertEquals("4th-6th", $number->render($data));
 
-        $number = new Number(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
+        $number = Number::factory(new SimpleXMLElement('<number variable="edition" form="ordinal"/>'));
         $data = json_decode("{\"title\": \"Ein Buch\", \"edition\": \"ii-x\"}");
         $this->assertEquals("2nd-10th", $number->render($data));
     }

@@ -12,7 +12,7 @@ namespace Seboettg\CiteProc\Styles;
 
 use Seboettg\CiteProc\Util\StringHelper;
 
-class TextCaseRenderer implements StyleRendererInterface
+final class TextCaseRenderer implements StyleRendererInterface
 {
     /** @var TextCase */
     protected $textCase;
@@ -22,6 +22,9 @@ class TextCaseRenderer implements StyleRendererInterface
 
     public function __construct(?TextCase $textCase = null, string $language = 'en')
     {
+        if (null === $textCase) {
+            $textCase = TextCase::NONE();
+        }
         $this->textCase = $textCase;
         $this->language = $language;
     }
@@ -63,8 +66,6 @@ class TextCaseRenderer implements StyleRendererInterface
             case TextCase::CAPITALIZE_FIRST:
                 $text = $this->keepNoCase(StringHelper::mb_ucfirst($text), $text);
                 break;
-            default:
-                break;
         }
 
         return $text;
@@ -82,5 +83,10 @@ class TextCaseRenderer implements StyleRendererInterface
             return preg_replace('/(<span class=\"nocase\">\p{L}+<\/span>)/i', $match[1], $render);
         }
         return $render;
+    }
+
+    public function getTextCase(): ?TextCase
+    {
+        return $this->textCase;
     }
 }

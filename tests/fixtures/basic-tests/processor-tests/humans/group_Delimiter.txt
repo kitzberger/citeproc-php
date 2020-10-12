@@ -5,7 +5,7 @@ bibliography
 
 >>===== RESULT =====>>
 <div class="csl-bib-body">
-  <div class="csl-entry">Josephson, Nors S., ed, <i>Early Sixteenth-Century Sacred Music from the Papal Chapel</i>, Corpus Mensurabilis Musicae, 95-2 (Neuhausen-Stuttgart: American Institute of Musicology, Hänssler-Verlag, 1982), <span style="font-variant: small-caps;">ii</span></div>
+  <div class="csl-entry">Josephson, Nors S., ed, <i>Early Sixteenth-Century Sacred Music from the Papal Chapel</i>, Corpus Mensurabilis Musicae, 95-2 (Neuhausen-Stuttgart: American Institute of Musicology, Hänssler-Verlag, 1982), <span style="font-variant: small-caps">ii</span></div>
 </div>
 <<===== RESULT =====<<
 
