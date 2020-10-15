@@ -38,7 +38,7 @@ final class QuotesRenderer implements StylesRendererInterface
             $closeQuote = $this->locale->filter("terms", "close-quote")->single;
             $punctuationInQuotes = (bool) $this->locale->filter("options", "punctuation-in-quote");
             $text = $this->replaceOuterQuotes($text, $openQuote, $closeQuote);
-            if (null !== $punctuationInQuotes || $punctuationInQuotes === false) {
+            if ($punctuationInQuotes === false) {
                 if (preg_match("/([^\.,;]+)([\.,;]{1,})$/", $text, $match)) {
                     $punctuation = substr($match[2], -1);
                     if ($this->suffix !== $punctuation) {
