@@ -344,9 +344,11 @@ class Name implements HasParent
          */
         foreach ($data as $rank => $name) {
             switch ($subsequentSubstitutionRule) {
-                /* “partial-each” - when one or more rendered names in the name variable match those in the preceding
-                bibliographic entry, the value of subsequent-author-substitute substitutes for each matching name.
-                Matching starts with the first name, and continues up to the first mismatch. */
+                /*
+                 * “partial-each” - when one or more rendered names in the name variable match those in the
+                 * preceding bibliographic entry, the value of subsequent-author-substitute substitutes for each
+                 * matching name. Matching starts with the first name, and continues up to the first mismatch.
+                 */
                 case SubsequentAuthorSubstituteRule::PARTIAL_EACH:
                     if (NameHelper::precedingHasAuthor($preceding, $name)) {
                         $resultNames[] = $subsequentSubstitution;
@@ -354,8 +356,11 @@ class Name implements HasParent
                         $resultNames[] = $this->formatName($name, $rank);
                     }
                     break;
-                 /* “partial-first” - as “partial-each”, but substitution is limited to the first name of the name
-                variable. */
+
+                /*
+                 * “partial-first” - as “partial-each”, but substitution is limited to the first name of the name
+                 * variable.
+                 */
                 case SubsequentAuthorSubstituteRule::PARTIAL_FIRST:
                     if ($rank === 0) {
                         if ($preceding->author[0]->family === $name->family) {
@@ -368,8 +373,10 @@ class Name implements HasParent
                     }
                     break;
 
-                 /* “complete-each” - requires a complete match like “complete-all”, but now the value of
-                subsequent-author-substitute substitutes for each rendered name. */
+                 /*
+                  * “complete-each” - requires a complete match like “complete-all”, but now the value of
+                  * subsequent-author-substitute substitutes for each rendered name.
+                  */
                 case SubsequentAuthorSubstituteRule::COMPLETE_EACH:
                     try {
                         if (NameHelper::identicalAuthors($preceding, $data)) {
@@ -398,7 +405,6 @@ class Name implements HasParent
         $subsequentSubstitution = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstitute();
         $subsequentSubstitutionRule = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstituteRule();
         $preceding = CiteProc::getContext()->getCitationData()->get($citationNumber - 1);
-
 
         if ($hasPreceding && !is_null($subsequentSubstitution) && !empty($subsequentSubstitutionRule)) {
             /**
@@ -453,7 +459,7 @@ class Name implements HasParent
                 $text = implode(" ", $resultNames);
             } else { // >2
                 $lastName = array_pop($resultNames);
-                $text = implode($this->delimiter, $resultNames)." ".$lastName;
+                $text = implode($this->delimiter, $resultNames) . " " . $lastName;
             }
         }
         return $text;
@@ -539,8 +545,8 @@ class Name implements HasParent
 
                 list($family, $given) = $this->renderNameParts($data);
 
-                $text = $family.(!empty($given) ? $this->sortSeparator.$given : "");
-                $text .= !empty($data->suffix) ? $this->sortSeparator.$data->suffix : "";
+                $text = $family . (!empty($given) ? $this->sortSeparator . $given : "");
+                $text .= !empty($data->suffix) ? $this->sortSeparator . $data->suffix : "";
             } elseif ($this->form === "long"
                 && $nameAsSortOrder
                 && (is_null($demoteNonDroppingParticle)
@@ -551,13 +557,13 @@ class Name implements HasParent
                 NameHelper::appendParticleTo($data, "given", "non-dropping-particle");
                 list($family, $given) = $this->renderNameParts($data);
                 $text = $family;
-                $text .= !empty($given) ? $this->sortSeparator.$given : "";
-                $text .= !empty($data->suffix) ? $this->sortSeparator.$data->suffix : "";
+                $text .= !empty($given) ? $this->sortSeparator . $given : "";
+                $text .= !empty($data->suffix) ? $this->sortSeparator . $data->suffix : "";
             } elseif ($this->form === "long" && $nameAsSortOrder && empty($demoteNonDroppingParticle)) {
                 list($family, $given) = $this->renderNameParts($data);
                 $text = $family;
-                $text .= !empty($given) ? $this->delimiter.$given : "";
-                $text .= !empty($data->suffix) ? $this->sortSeparator.$data->suffix : "";
+                $text .= !empty($given) ? $this->delimiter . $given : "";
+                $text .= !empty($data->suffix) ? $this->sortSeparator . $data->suffix : "";
             } elseif ($this->form === "short") {
                 // [La] [Fontaine]
                 NameHelper::prependParticleTo($data, "family", "non-dropping-particle");
@@ -568,7 +574,7 @@ class Name implements HasParent
                 NameHelper::prependParticleTo($data, "family", "dropping-particle");
                 NameHelper::appendParticleTo($data, "family", "suffix");
                 list($family, $given) = $this->renderNameParts($data);
-                $text = !empty($given) ? $given." ".$family : $family;
+                $text = !empty($given) ? $given . " " . $family : $family;
             }
         } elseif (StringHelper::isAsianString(NameHelper::normalizeName($data))) {
             $text = $this->form === "long" ? $data->family . $data->given : $data->family;

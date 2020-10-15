@@ -39,7 +39,7 @@ class Locator extends Enum
     public static function mapLocatorLabelToRenderVariable($locatorTerm)
     {
         if ($locatorTerm instanceof Locator) {
-            $locatorTerm = (string)$locatorTerm;
+            $locatorTerm = (string) $locatorTerm;
         }
         return
             array_key_exists($locatorTerm, self::LABEL_TO_VARIABLE_MAP) ?

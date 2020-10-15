@@ -70,7 +70,7 @@ abstract class AbstractConstraint implements Constraint
         foreach ($this->conditionVariables as $variable) {
             $conditionMatched |= $this->matchForVariable($variable, $value);
         }
-        return (bool)$conditionMatched;
+        return (bool) $conditionMatched;
     }
 
     private function matchAll($value)
@@ -79,6 +79,6 @@ abstract class AbstractConstraint implements Constraint
         foreach ($this->conditionVariables as $variable) {
             $conditionMatched &= $this->matchForVariable($variable, $value);
         }
-        return (bool)$conditionMatched;
+        return (bool) $conditionMatched;
     }
 }
