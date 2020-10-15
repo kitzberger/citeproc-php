@@ -29,6 +29,6 @@ final class DisplayRenderer implements StylesRendererInterface
             return $text;
         }
 
-        return sprintf("<div class=\"csl-%s\">%s</div>", (string)$this->display, $text);
+        return sprintf("<div class=\"csl-%s\">%s</div>", (string) $this->display, $text);
     }
 }

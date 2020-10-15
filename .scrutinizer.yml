@@ -30,5 +30,5 @@ coding_style:
                 closure_definition: true
             around_operators:
                 bitwise: true
-                unary_additive: true
+                unary_additive: false
                 concatenation: true

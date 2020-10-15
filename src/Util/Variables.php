@@ -169,7 +169,7 @@ class Variables
         $parent = null;
         $names = new Names(
             new SimpleXMLElement(
-                "<names variable=\"$variable\" delimiter=\"-\">".
+                "<names variable=\"$variable\" delimiter=\"-\">" .
                 "<name form=\"long\" sort-separator=\",\" name-as-sort-order=\"all\"/></names>"
             ),
             $parent

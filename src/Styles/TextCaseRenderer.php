@@ -40,7 +40,7 @@ final class TextCaseRenderer implements StylesRendererInterface
             return $text;
         }
 
-        switch ((string)$this->textCase) {
+        switch ((string) $this->textCase) {
             case TextCase::UPPERCASE:
                 $text = $this->keepNoCase(mb_strtoupper($text), $text);
                 break;

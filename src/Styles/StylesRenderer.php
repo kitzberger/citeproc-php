@@ -35,19 +35,19 @@ class StylesRenderer
             $name = $attribute->getName();
             switch ($name) {
                 case 'prefix':
-                    $prefix = (string)$attribute;
+                    $prefix = (string) $attribute;
                     break;
                 case 'suffix':
-                    $suffix = (string)$attribute;
+                    $suffix = (string) $attribute;
                     break;
                 case 'text-case':
-                    $textCase = new TextCase((string)$attribute);
+                    $textCase = new TextCase((string) $attribute);
                     break;
                 case 'display':
-                    $display = new Display((string)$attribute);
+                    $display = new Display((string )$attribute);
                     break;
                 case 'quotes':
-                    $quotes = "true" === (string)$attribute;
+                    $quotes = "true" === (string) $attribute;
                     break;
                 default:
                     if (in_array($attribute->getName(), $formattingAttributes)) {

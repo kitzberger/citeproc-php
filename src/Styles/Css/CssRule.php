@@ -11,11 +11,6 @@ namespace Seboettg\CiteProc\Styles\Css;
 
 use Seboettg\Collection\ArrayList;
 
-/**
- * Class CssRule
- * @package Seboettg\CiteProc\Styles\Css
- * @author Sebastian Böttger <seboettg@gmail.com>
- */
 class CssRule
 {
     const SELECTOR_TYPE_ID = "#";
@@ -42,7 +37,7 @@ class CssRule
      * @param string $selector
      * @param string $selectorType
      */
-    public function __construct($selector, $selectorType = self::SELECTOR_TYPE_CLASS)
+    public function __construct(string $selector, string $selectorType = self::SELECTOR_TYPE_CLASS)
     {
         $this->selector = $selector;
         $this->selectorType = $selectorType;
@@ -54,9 +49,9 @@ class CssRule
      * @param string $property
      * @param string $value
      */
-    public function addDirective($property, $value)
+    public function addDirective(string $property, string $value)
     {
-        $this->directives->append("$property: $value;");
+        $this->directives->append(sprintf("%s: %s;", $property, $value));
     }
 
     /**
@@ -64,7 +59,7 @@ class CssRule
      */
     public function __toString()
     {
-        $directives = "\t".implode("\n\t", $this->directives->toArray());
-        return $this->selectorType.$this->selector." {\n".$directives."\n}\n";
+        $directives = sprintf("\t%s", implode("\n\t", $this->directives->toArray()));
+        return sprintf("%s%s {\n%s\n}\n", $this->selectorType, $this->selector, $directives);
     }
 }
