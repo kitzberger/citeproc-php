@@ -13,6 +13,12 @@ use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Rendering\Observer\CitationItemsChanged;
+use Seboettg\CiteProc\Rendering\Observer\ModeChangedEvent;
+use Seboettg\CiteProc\Rendering\Observer\RenderingEvent;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObservable;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\StateChangedEvent;
 use Seboettg\CiteProc\Root\Info;
 use Seboettg\CiteProc\Style\Bibliography;
 use Seboettg\CiteProc\Style\Citation;
@@ -24,6 +30,7 @@ use Seboettg\CiteProc\Style\Sort\Sort;
 use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Styles\Css\CssStyle;
 use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 
 /**
  * Class Context
@@ -31,9 +38,9 @@ use Seboettg\Collection\ArrayList;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Context
+class Context implements RenderingObservable
 {
-    /** @var ArrayList */
+    /** @var ArrayListInterface */
     private $macros;
 
     /** @var Locale */
@@ -54,10 +61,10 @@ class Context
     /** @var DataList */
     private $citationData;
 
-    /** @var ArrayList */
+    /** @var ArrayListInterface */
     private $citationItems;
 
-    /** @var ArrayList */
+    /** @var ArrayListInterface */
     private $results;
 
     /** @var Root */
@@ -87,8 +94,11 @@ class Context
     /** @var bool */
     private $citationsAsArray = false;
 
-    /** @var ArrayList */
+    /** @var ArrayListInterface */
     private $citedItems;
+
+    /** @var ArrayListInterface */
+    private $observers;
 
     public function __construct($locale = null)
     {
@@ -100,7 +110,23 @@ class Context
         $this->citationData = new DataList();
         $this->results = new ArrayList();
         $this->renderingState = RenderingState::RENDERING();
+        $this->mode = RenderingMode::BIBLIOGRAPHY();
         $this->citedItems = new ArrayList();
+        $this->citationItems = new ArrayList();
+        $this->observers = new ArrayList();
+    }
+
+    public function addObserver(RenderingObserver $observer): void
+    {
+        $this->observers->append($observer);
+    }
+
+    private function notifyObservers(RenderingEvent $event)
+    {
+        /** @var RenderingObserver $observer */
+        foreach ($this->observers as $observer) {
+            $observer->notify($event);
+        }
     }
 
     public function addMacro($key, $macro)
@@ -203,6 +229,7 @@ class Context
     public function setMode(RenderingMode $mode)
     {
         $this->mode = $mode;
+        $this->notifyObservers(new ModeChangedEvent($mode));
     }
 
     /**
@@ -232,7 +259,7 @@ class Context
     }
 
     /**
-     * @param ArrayList|DataList $citationData
+     * @param ArrayListInterface|DataList $citationData
      */
     public function setCitationData($citationData)
     {
@@ -240,19 +267,20 @@ class Context
     }
 
     /**
-     * @return ArrayList
+     * @return ArrayListInterface
      */
-    public function getCitationItems(): ArrayList
+    public function getCitationItems(): ?ArrayListInterface
     {
         return $this->citationItems;
     }
 
     /**
-     * @param ArrayList $citationItems
+     * @param ArrayListInterface $citationItems
      */
-    public function setCitationItems(ArrayList $citationItems): void
+    public function setCitationItems(ArrayListInterface $citationItems): void
     {
         $this->citationItems = $citationItems;
+        $this->notifyObservers(new CitationItemsChanged($citationItems));
     }
 
     public function hasCitationItems()
@@ -269,9 +297,9 @@ class Context
     }
 
     /**
-     * @return ArrayList
+     * @return ArrayListInterface
      */
-    public function getResults()
+    public function getResults(): ArrayListInterface
     {
         return $this->results;
     }
@@ -322,12 +350,13 @@ class Context
     public function setRenderingState(RenderingState $renderingState)
     {
         $this->renderingState = $renderingState;
+        $this->notifyObservers(new StateChangedEvent($renderingState));
     }
 
     /**
      * @return BibliographyOptions
      */
-    public function getBibliographySpecificOptions()
+    public function getBibliographySpecificOptions(): ?BibliographyOptions
     {
         return $this->bibliographySpecificOptions;
     }
@@ -343,7 +372,7 @@ class Context
     /**
      * @return CitationOptions
      */
-    public function getCitationSpecificOptions()
+    public function getCitationSpecificOptions(): ?CitationOptions
     {
         return $this->citationSpecificOptions;
     }
@@ -391,9 +420,9 @@ class Context
     }
 
     /**
-     * @param array $markupExtension
+     * @param callable[] $markupExtension
      */
-    public function setMarkupExtension($markupExtension)
+    public function setMarkupExtension(array $markupExtension)
     {
         $this->markupExtension = $markupExtension;
     }
@@ -406,17 +435,17 @@ class Context
     }
 
     /**
-     * @return ArrayList
+     * @return ArrayListInterface
      */
-    public function getCitedItems(): ArrayList
+    public function getCitedItems(): ArrayListInterface
     {
         return $this->citedItems;
     }
 
     /**
-     * @param ArrayList $citedItems
+     * @param ArrayListInterface $citedItems
      */
-    public function setCitedItems(ArrayList $citedItems): void
+    public function setCitedItems(ArrayListInterface $citedItems): void
     {
         $this->citedItems = $citedItems;
     }

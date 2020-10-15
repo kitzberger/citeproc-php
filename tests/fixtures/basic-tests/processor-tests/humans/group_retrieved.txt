@@ -1,0 +1,65 @@
+>>===== MODE =====>>
+bibliography
+<<===== MODE =====<<
+
+
+>>===== RESULT =====>>
+<div class="csl-bib-body">
+  <div class="csl-entry">Foo.</div>
+  <div class="csl-entry">Bar. “Retrieved from https://example.org.”</div>
+</div>
+<<===== RESULT =====<<
+
+
+>>===== CSL =====>>
+<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0">
+  <macro name="retrieved">
+    <group>
+      <text term="retrieved" text-case="capitalize-first" suffix=" " />
+      <text term="from" suffix=" "/>
+      <text variable="URL"/>
+    </group>
+  </macro>
+  <bibliography>
+    <layout suffix=".">
+      <group delimiter=". ">
+        <text variable="title" />
+        <text macro="retrieved" quotes="true" />
+      </group>
+    </layout>
+  </bibliography>
+</style>
+<<===== CSL =====<<
+
+
+>>===== INPUT =====>>
+[
+    {
+        "issued": {
+            "date-parts": [
+                [
+                    "2004", 
+                    "10", 
+                    21
+                ]
+            ]
+        }, 
+        "title": "Foo", 
+        "type": "article-journal"
+    }, 
+    {
+        "URL": "https://example.org", 
+        "issued": {
+            "date-parts": [
+                [
+                    "2004", 
+                    "10", 
+                    21
+                ]
+            ]
+        }, 
+        "title": "Bar", 
+        "type": "article-journal"
+    }
+]
+<<===== INPUT =====<<

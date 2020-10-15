@@ -13,7 +13,7 @@ namespace Seboettg\CiteProc\Styles;
 use Seboettg\Collection\ArrayList;
 use SimpleXMLElement;
 
-final class FormattingRenderer implements StyleRendererInterface
+final class FormattingRenderer implements StylesRendererInterface
 {
 
     public static function factory(SimpleXMLElement $node)

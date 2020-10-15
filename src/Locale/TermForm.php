@@ -18,9 +18,18 @@ use MyCLabs\Enum\Enum;
  *   - “long” - (default), e.g. “page”/”pages” for the “page” term
  *   - “short” - e.g. “p.”/”pp.” for the “page” term
  *   - “symbol” - e.g. “§”/”§§” for the “section” term
+ *
+ * @method static NONE()
+ * @method static LONG()
+ * @method static SHORT()
+ * @method static SYMBOL()
+ * @method static VERB_SHORT()
+ * @method static VERB()
  */
-class Form extends Enum
+class TermForm extends Enum
 {
+    public const NONE = "none";
+
     public const LONG = "long";
 
     public const SHORT = "short";

@@ -7,16 +7,14 @@
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Rendering;
+namespace Seboettg\CiteProc\Rendering\Label;
 
 use Seboettg\CiteProc\CiteProc;
-use Seboettg\CiteProc\Locale\Form;
 use Seboettg\CiteProc\Locale\Locale;
-use Seboettg\CiteProc\Styles\AffixesRenderer;
-use Seboettg\CiteProc\Styles\FormattingRenderer;
+use Seboettg\CiteProc\Locale\TermForm;
+use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Styles\FormattingTrait;
-use Seboettg\CiteProc\Styles\TextCase;
-use Seboettg\CiteProc\Styles\TextCaseRenderer;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
 use stdClass;
 
@@ -32,29 +30,22 @@ class Label implements Rendering
 
     private $variable;
 
-    /** @var Form  */
+    /** @var TermForm  */
     private $form;
 
     /** @var Plural */
     private $plural;
 
-    /** @var TextCaseRenderer */
-    private $textCase;
-
-    /** @var FormattingRenderer */
-    private $formatting;
-
-    /** @var AffixesRenderer */
-    private $affixes;
-
     /** @var Locale */
     private $locale;
+
+    /** @var StylesRenderer */
+    private $stylesRenderer;
 
     public static function factory(SimpleXMLElement $node)
     {
         $variable = $form = $plural = null;
         $context = CiteProc::getContext();
-        $prefix = $suffix = $textCase = null;
 
         foreach ($node->attributes() as $attribute) {
             switch ($attribute->getName()) {
@@ -62,58 +53,38 @@ class Label implements Rendering
                     $variable = (string) $attribute;
                     break;
                 case "form":
-                    $form = new Form((string) $attribute);
+                    $form = new TermForm((string) $attribute);
                     break;
                 case "plural":
                     $plural = new Plural((string) $attribute);
                     break;
-                case 'prefix':
-                    $prefix = (string) $attribute;
-                    break;
-                case 'suffix':
-                    $suffix = (string) $attribute;
-                    break;
-                case 'quote':
-                    //$quote = (bool) $attribute;
-                    break;
-                case 'text-case':
-                    $textCase = new TextCase((string) $attribute);
-                    break;
             }
         }
         $locale = $context->getLocale();
-        $formatting = FormattingRenderer::factory($node);
-        $textCase = new TextCaseRenderer($textCase);
-        $affixes = AffixesRenderer::factory($context, $prefix, $suffix);
-        return new self($variable, $form, $plural, $formatting, $affixes, $textCase, $locale);
+        $stylesRenderer = StylesRenderer::factory($node);
+        return new self($variable, $form, $plural, $stylesRenderer, $locale);
     }
 
 
     /**
      * Label constructor.
      * @param string|null $variable
-     * @param Form|null $form
+     * @param TermForm|null $form
      * @param Plural|null $plural
-     * @param FormattingRenderer $formatting
-     * @param AffixesRenderer $affixes
-     * @param TextCaseRenderer $textCase
+     * @param StylesRenderer $stylesRenderer
      * @param Locale $locale
      */
     public function __construct(
         ?string $variable,
-        ?Form $form,
+        ?TermForm $form,
         ?Plural $plural,
-        FormattingRenderer $formatting,
-        AffixesRenderer $affixes,
-        TextCaseRenderer $textCase,
+        StylesRenderer $stylesRenderer,
         Locale $locale
     ) {
         $this->variable = $variable;
         $this->form = $form;
         $this->plural = $plural;
-        $this->formatting = $formatting;
-        $this->affixes = $affixes;
-        $this->textCase = $textCase;
+        $this->stylesRenderer = $stylesRenderer;
         $this->locale = $locale;
     }
 
@@ -125,7 +96,7 @@ class Label implements Rendering
     public function render($data, $citationNumber = null)
     {
         $lang = (isset($data->language) && $data->language != 'en') ? $data->language : 'en';
-        $this->textCase->setLanguage($lang);
+        $this->stylesRenderer->getTextCase()->setLanguage($lang);
         $text = '';
         $variables = explode(' ', $this->variable);
         $form = !empty($this->form) ? $this->form : 'long';
@@ -273,9 +244,9 @@ class Label implements Rendering
         }
 
         $text = preg_replace("/\s&\s/", " &#38; ", $text); //replace ampersands by html entity
-        $text = $this->textCase->render($text);
-        $text = $this->formatting->render($text);
-        return $this->affixes->render($text);
+        $text = $this->stylesRenderer->renderTextCase($text);
+        $text = $this->stylesRenderer->renderFormatting($text);
+        return $this->stylesRenderer->renderAffixes($text);
     }
 
     /**

@@ -12,7 +12,7 @@ namespace Seboettg\CiteProc\Styles;
 
 use Seboettg\CiteProc\Util\StringHelper;
 
-final class TextCaseRenderer implements StyleRendererInterface
+final class TextCaseRenderer implements StylesRendererInterface
 {
     /** @var TextCase */
     protected $textCase;

@@ -11,13 +11,16 @@ namespace Seboettg\CiteProc\Test\Rendering\Choose;
 
 use PHPUnit\Framework\TestCase;
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\Locale;
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Context;
+use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\ClassNotFoundException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Choose\Choose;
 use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
 use SimpleXMLElement;
+use function Seboettg\CiteProc\loadLocales;
 
 class ChooseTest extends TestCase
 {
@@ -32,14 +35,16 @@ class ChooseTest extends TestCase
     /**
      * @throws ClassNotFoundException
      * @throws InvalidStylesheetException
+     * @throws CiteProcException
      */
     public function testIsNumeric()
     {
         $xml = new SimpleXMLElement($this->chooseXml[1]);
-        $choose = new Choose($xml, null);
         $context = new Context();
         $context->setMode(RenderingMode::BIBLIOGRAPHY());
+        $context->setLocale(new \Seboettg\CiteProc\Locale\Locale(Locale::EN_US()));
         CiteProc::setContext($context);
+        $choose = new Choose($xml, null);
         $ret1 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität","volume":2}'));
         $ret2 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität","volume":"non-numeric value"}'));
         $ret3 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität"}'));

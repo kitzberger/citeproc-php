@@ -12,12 +12,8 @@ namespace Seboettg\CiteProc\Rendering\Number;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Rendering\Rendering;
-use Seboettg\CiteProc\Styles\AffixesRenderer;
-use Seboettg\CiteProc\Styles\Display;
-use Seboettg\CiteProc\Styles\DisplayRenderer;
-use Seboettg\CiteProc\Styles\FormattingRenderer;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Styles\TextCase;
-use Seboettg\CiteProc\Styles\TextCaseRenderer;
 use Seboettg\CiteProc\Util;
 use SimpleXMLElement;
 use stdClass;
@@ -45,32 +41,9 @@ class Number implements Rendering
 
     private const PATTERN_NUMERIC = "/\s*(\d+)\s*([\-\–&,])\s*(\d+)\s*/";
 
-
-    /** @var string */
-    private $variable;
-
-    /** @var Form  */
-    private $form;
-
-    /** @var TextCaseRenderer */
-    private $textCase;
-
-    /** @var AffixesRenderer */
-    private $affixes;
-
-    /** @var FormattingRenderer */
-    private $formatting;
-
-    /** @var DisplayRenderer */
-    private $display;
-
-    /** @var Locale */
-    private $locale;
-
     public static function factory(SimpleXMLElement $node)
     {
         $form = $variable = null;
-        $prefix = $suffix = $textCase = $display = null;
         $context = CiteProc::getContext();
 
         foreach ($node->attributes() as $attribute) {
@@ -81,43 +54,35 @@ class Number implements Rendering
                 case 'form':
                     $form = new Form((string) $attribute);
                     break;
-                case 'prefix':
-                    $prefix = (string) $attribute;
-                    break;
-                case 'suffix':
-                    $suffix = (string) $attribute;
-                    break;
-                case 'text-case':
-                    $textCase = new TextCase((string) $attribute);
-                    break;
-                case 'display':
-                    $display = new Display((string) $attribute);
             }
         }
-        $formatting = FormattingRenderer::factory($node);
-        $textCase = new TextCaseRenderer($textCase);
-        $affixes = AffixesRenderer::factory($context, $prefix, $suffix);
-        $display = new DisplayRenderer($display);
+        $stylesRenderer = StylesRenderer::factory($node);
         $locale = $context->getLocale();
-        return new self($variable, $form, $locale, $formatting, $textCase, $affixes, $display);
+        return new self($variable, $form, $locale, $stylesRenderer);
     }
+
+    /** @var string */
+    private $variable;
+
+    /** @var Form  */
+    private $form;
+
+    /** @var Locale */
+    private $locale;
+
+    /** @var StylesRenderer */
+    private $stylesRenderer;
 
     public function __construct(
         ?string $variable,
         ?Form $form,
         ?Locale $locale,
-        ?FormattingRenderer $formatting,
-        ?TextCaseRenderer $textCase,
-        ?AffixesRenderer $affixes,
-        ?DisplayRenderer $display
+        StylesRenderer $stylesRenderer
     ) {
         $this->locale = $locale;
         $this->variable = $variable;
         $this->form = $form;
-        $this->formatting = $formatting;
-        $this->textCase = $textCase;
-        $this->affixes = $affixes;
-        $this->display = $display;
+        $this->stylesRenderer = $stylesRenderer;
     }
 
     /**
@@ -146,15 +111,15 @@ class Number implements Rendering
                 break;
             case Form::LONG_ORDINAL:
                 if (preg_match(self::PATTERN_LONG_ORDINAL, $decimalNumber, $matches)) {
-                    if (in_array($this->textCase->getTextCase()->getValue(), [
+                    if (in_array($this->stylesRenderer->getTextCase()->getTextCase()->getValue(), [
                         TextCase::CAPITALIZE_FIRST,
                         TextCase::SENTENCE
                     ])) {
                         $num1 = $this->longOrdinal($matches[1]);
                         $num2 = $this->longOrdinal($matches[3]);
                     } else {
-                        $num1 = $this->textCase->render($this->longOrdinal($matches[1]));
-                        $num2 = $this->textCase->render($this->longOrdinal($matches[3]));
+                        $num1 = $this->stylesRenderer->renderTextCase($this->longOrdinal($matches[1]));
+                        $num2 = $this->stylesRenderer->renderTextCase($this->longOrdinal($matches[3]));
                     }
                     $text = $this->buildNumberRangeString($num1, $num2, $matches[2]);
                 } else {
@@ -186,11 +151,11 @@ class Number implements Rendering
                 }
                 break;
         }
-        $this->textCase->setLanguage($lang);
-        $text = $this->textCase->render($text);
-        $text = $this->formatting->render($text);
-        $text = $this->affixes->render($text);
-        return $this->display->render($text);
+        $this->stylesRenderer->getTextCase()->setLanguage($lang);
+        $text = $this->stylesRenderer->renderTextCase($text);
+        $text = $this->stylesRenderer->renderFormatting($text);
+        $text = $this->stylesRenderer->renderAffixes($text);
+        return $this->stylesRenderer->renderDisplay($text);
     }
 
     /**

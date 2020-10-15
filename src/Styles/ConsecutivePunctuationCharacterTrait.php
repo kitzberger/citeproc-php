@@ -52,7 +52,7 @@ trait ConsecutivePunctuationCharacterTrait
     /**
      * @param $child
      */
-    protected function getChildsAffixesAndDelimiter($child)
+    protected function getChildrenAffixesAndDelimiter($child)
     {
         if (method_exists($child, "renderPrefix")) {
             if (!empty($child->renderPrefix()) && !in_array($child->renderPrefix(), $this->childrenPrefixes)) {

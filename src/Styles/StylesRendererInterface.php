@@ -9,7 +9,7 @@
 
 namespace Seboettg\CiteProc\Styles;
 
-interface StyleRendererInterface
+interface StylesRendererInterface
 {
 
     public function render(string $text): string;

@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Seboettg\CiteProc\Styles;
 
-final class DisplayRenderer implements StyleRendererInterface
+final class DisplayRenderer implements StylesRendererInterface
 {
 
     /**

@@ -9,7 +9,7 @@ declare(strict_types=1);
  */
 
 
-namespace Seboettg\CiteProc\Rendering;
+namespace Seboettg\CiteProc\Rendering\Label;
 
 use MyCLabs\Enum\Enum;
 

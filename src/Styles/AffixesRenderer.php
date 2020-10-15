@@ -12,7 +12,7 @@ namespace Seboettg\CiteProc\Styles;
 
 use Seboettg\CiteProc\Context;
 
-final class AffixesRenderer implements StyleRendererInterface
+final class AffixesRenderer implements StylesRendererInterface
 {
 
     public static function factory(Context $context, ?string $prefix, ?string $suffix)

@@ -10,8 +10,9 @@
 namespace Seboettg\CiteProc\Util;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
-use Seboettg\CiteProc\Rendering\Label;
+use Seboettg\CiteProc\Rendering\Label\Label;
 use Seboettg\CiteProc\Rendering\Number\Number;
+use Seboettg\CiteProc\Rendering\Text\Text;
 use Seboettg\CiteProc\StyleSheet;
 use SimpleXMLElement;
 
@@ -31,10 +32,10 @@ class Factory
     private static $nodes = [
 
         'layout'        => "\\Layout",
-        'text'          => "\\Text",
+        'text'          => "\\Text\\Text",
         "macro"         => "\\Macro",
         "number"        => "\\Number\\Number",
-        "label"         => "\\Label",
+        "label"         => "\\Label\\Label",
         "group"         => "\\Group",
         "choose"        => "\\Choose\\Choose",
         "if"            => "\\Choose\\ChooseIf",
@@ -51,7 +52,8 @@ class Factory
 
     private static $factories = [
         Label::class,
-        Number::class
+        Number::class,
+        Text::class,
     ];
 
     /**

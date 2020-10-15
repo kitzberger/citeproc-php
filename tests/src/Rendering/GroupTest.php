@@ -89,4 +89,9 @@ class GroupTest extends TestCase
         $this->_testRenderTestSuite("group_SuppressWithEmptyNestedDateNode");
     }
     */
+
+    public function testGroupRetrieved()
+    {
+        $this->runTestSuite("group_retrieved");
+    }
 }

@@ -10,6 +10,7 @@
 namespace Seboettg\CiteProc;
 
 use Seboettg\CiteProc\Exception\CiteProcException;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 
 /**
  * System locale-save implementation of \ucfirst. For example, when using the tr_TR locale, \ucfirst('i') yields "i".
@@ -96,4 +97,16 @@ function loadLocalesMetadata()
 {
     $localesMetadataPath = vendorPath() . "/citation-style-language/locales/locales.json";
     return json_decode(file_get_contents($localesMetadataPath));
+}
+
+/**
+ * @param ArrayListInterface $list
+ * @param mixed $id
+ * @return false|mixed
+ */
+function getCurrentById(ArrayListInterface $list, $id)
+{
+    return $list->filter(function ($item) use ($id) {
+        return $item->id === $id;
+    })->current();
 }

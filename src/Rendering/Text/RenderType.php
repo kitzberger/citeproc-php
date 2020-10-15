@@ -8,18 +8,14 @@ declare(strict_types=1);
  * @license     https://opensource.org/licenses/MIT
  */
 
-namespace Seboettg\CiteProc\Rendering\Number;
+namespace Seboettg\CiteProc\Rendering\Text;
 
 use MyCLabs\Enum\Enum;
 
-class Form extends Enum
+class RenderType extends Enum
 {
-
-    public const NUMERIC = "numeric";
-
-    public const ORDINAL = "ordinal";
-
-    public const LONG_ORDINAL = "long-ordinal";
-
-    public const ROMAN = "roman";
+    public const VALUE = "value";
+    public const VARIABLE = "variable";
+    public const MACRO = "macro";
+    public const TERM = "term";
 }

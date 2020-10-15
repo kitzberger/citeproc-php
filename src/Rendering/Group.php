@@ -10,6 +10,8 @@
 namespace Seboettg\CiteProc\Rendering;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Label\Label;
+use Seboettg\CiteProc\Rendering\Text\Text;
 use Seboettg\CiteProc\Styles\AffixesTrait;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
 use Seboettg\CiteProc\Styles\DelimiterTrait;
