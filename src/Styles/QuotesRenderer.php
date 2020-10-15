@@ -18,13 +18,13 @@ final class QuotesRenderer implements StylesRendererInterface
     /** @var bool */
     private $quotes;
 
-    /** @var Locale|null */
+    /** @var Locale */
     private $locale;
 
     /** @var string|null */
     private $suffix;
 
-    public function __construct(bool $quotes, ?Locale $locale, ?string $suffix)
+    public function __construct(bool $quotes, Locale $locale, ?string $suffix)
     {
         $this->quotes = $quotes;
         $this->locale = $locale;
@@ -36,7 +36,7 @@ final class QuotesRenderer implements StylesRendererInterface
         if ($this->quotes) {
             $openQuote = $this->locale->filter("terms", "open-quote")->single;
             $closeQuote = $this->locale->filter("terms", "close-quote")->single;
-            $punctuationInQuotes =$this->locale->filter("options", "punctuation-in-quote");
+            $punctuationInQuotes = (bool) $this->locale->filter("options", "punctuation-in-quote");
             $text = $this->replaceOuterQuotes($text, $openQuote, $closeQuote);
             if (null !== $punctuationInQuotes || $punctuationInQuotes === false) {
                 if (preg_match("/([^\.,;]+)([\.,;]{1,})$/", $text, $match)) {

@@ -36,7 +36,8 @@ class Text implements Rendering, RenderingObserver
 {
     public static function factory(SimpleXMLElement $node)
     {
-        $renderType = $renderObject = $form = null;
+        $renderObject = "";
+        $renderType = $form = null;
         foreach ($node->attributes() as $attribute) {
             $name = $attribute->getName();
             switch ($name) {

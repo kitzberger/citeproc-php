@@ -222,16 +222,15 @@ class Label implements Rendering
     }
 
     /**
-     * @param string $form
+     * @param TermForm $form
      */
-    public function setForm(string $form)
+    public function setForm(TermForm $form)
     {
         $this->form = $form;
     }
 
     /**
      * @param $text
-     * @param $lang
      * @return string
      */
     protected function formatting($text)
