@@ -16,7 +16,7 @@ use SimpleXMLElement;
 class StylesRenderer
 {
 
-    public static function factory(SimpleXMLElement $node)#
+    public static function factory(SimpleXMLElement $node)
     {
         $formattingAttributes = [
             'font-style',

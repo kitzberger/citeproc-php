@@ -12,7 +12,7 @@ namespace Seboettg\CiteProc\Rendering\Observer;
 
 use Seboettg\Collection\ArrayList\ArrayListInterface;
 
-class CitationItemsChanged implements RenderingEvent
+class CitationItemsChangedEvent implements RenderingEvent
 {
     /** @var ArrayListInterface */
     private $citationItems;

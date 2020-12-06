@@ -38,7 +38,7 @@ trait RenderingObserverTrait
         if ($event instanceof ModeChangedEvent) {
             $this->mode = $event->getMode();
         }
-        if ($event instanceof CitationItemsChanged) {
+        if ($event instanceof CitationItemsChangedEvent) {
             $this->citationItems = $event->getCitationItems();
         }
         if ($event instanceof StateChangedEvent) {

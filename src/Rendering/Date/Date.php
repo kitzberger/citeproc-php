@@ -14,10 +14,9 @@ use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Date\DateRange\DateRangeRenderer;
-use Seboettg\CiteProc\Styles\AffixesTrait;
-use Seboettg\CiteProc\Styles\DisplayTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
-use Seboettg\CiteProc\Styles\TextCaseTrait;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Util;
 use Seboettg\Collection\ArrayList;
 use SimpleXMLElement;
@@ -28,12 +27,9 @@ use SimpleXMLElement;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Date
+class Date implements RenderingObserver
 {
-    use AffixesTrait,
-        DisplayTrait,
-        FormattingTrait,
-        TextCaseTrait;
+    use RenderingObserverTrait;
 
     // bitmask: ymd
     const DATE_RANGE_STATE_NONE         = 0; // 000
@@ -44,6 +40,52 @@ class Date
     const DATE_RANGE_STATE_YEARDAY      = 5; // 101
     const DATE_RANGE_STATE_YEARMONTH    = 6; // 110
     const DATE_RANGE_STATE_YEARMONTHDAY = 7; // 111
+
+    public static function factory(SimpleXMLElement $node)
+    {
+        $variable = $form = $datePartsAttribute = "";
+        $dateParts = new ArrayList();
+        foreach ($node->attributes() as $attribute) {
+            switch ($attribute->getName()) {
+                case 'form':
+                    $form = (string) $attribute;
+                    break;
+                case 'variable':
+                    $variable = (string) $attribute;
+                    break;
+                case 'date-parts':
+                    $datePartsAttribute = (string) $attribute;
+            }
+        }
+        foreach ($node->children() as $child) {
+            if ($child->getName() === "date-part") {
+                $datePartName = (string) $child->attributes()["name"];
+                $dateParts->set($form . "-" . $datePartName, Util\Factory::create($child));
+            }
+        }
+        $stylesRenderer = StylesRenderer::factory($node);
+        return new self(
+            $variable,
+            $form,
+            $datePartsAttribute,
+            $dateParts,
+            $stylesRenderer
+        );
+    }
+
+    public function __construct(
+        string $variable,
+        string $form,
+        string $datePartsAttribute,
+        ArrayList $dateParts,
+        StylesRenderer $stylesRenderer
+    ) {
+        $this->variable = $variable;
+        $this->form = $form;
+        $this->datePartsAttribute = $datePartsAttribute;
+        $this->dateParts = $dateParts;
+        $this->stylesRenderer = $stylesRenderer;
+    }
 
     private static $localizedDateFormats = [
         'numeric',
@@ -71,40 +113,9 @@ class Date
     private $datePartsAttribute = "";
 
     /**
-     * Date constructor.
-     * @param SimpleXMLElement $node
-     * @throws InvalidStylesheetException
+     * @var StylesRenderer
      */
-    public function __construct(SimpleXMLElement $node)
-    {
-        $this->dateParts = new ArrayList();
-
-        /** @var SimpleXMLElement $attribute */
-        foreach ($node->attributes() as $attribute) {
-            switch ($attribute->getName()) {
-                case 'form':
-                    $this->form = (string) $attribute;
-                    break;
-                case 'variable':
-                    $this->variable = (string) $attribute;
-                    break;
-                case 'date-parts':
-                    $this->datePartsAttribute = (string) $attribute;
-            }
-        }
-        /** @var SimpleXMLElement $child */
-        foreach ($node->children() as $child) {
-            if ($child->getName() === "date-part") {
-                $datePartName = (string) $child->attributes()["name"];
-                $this->dateParts->set($this->form . "-" . $datePartName, Util\Factory::create($child));
-            }
-        }
-
-        $this->initAffixesAttributes($node);
-        $this->initDisplayAttributes($node);
-        $this->initFormattingAttributes($node);
-        $this->initTextCaseAttributes($node);
-    }
+    private $stylesRenderer;
 
     /**
      * @param $data
@@ -127,12 +138,10 @@ class Date
         } catch (CiteProcException $e) {
             if (isset($data->{$this->variable}->{'raw'}) &&
                 !preg_match("/(\p{L}+)\s?([\-\–&,])\s?(\p{L}+)/u", $data->{$this->variable}->{'raw'})) {
-                return $this->addAffixes($this->format($this->applyTextCase($data->{$this->variable}->{'raw'})));
+                return $this->renderStyles($data->{$this->variable}->{'raw'});
             } else {
                 if (isset($data->{$this->variable}->{'string-literal'})) {
-                    return $this->addAffixes(
-                        $this->format($this->applyTextCase($data->{$this->variable}->{'string-literal'}))
-                    );
+                    return $this->renderStyles($data->{$this->variable}->{'string-literal'});
                 }
             }
         }
@@ -201,7 +210,7 @@ class Date
             $ret = $this->renderNumeric($data[0]);
         }
 
-        return !empty($ret) ? $this->addAffixes($this->format($this->applyTextCase($ret))) : "";
+        return !empty($ret) ? $this->renderStyles($ret) : "";
     }
 
     /**
@@ -408,5 +417,18 @@ class Date
             return $datePart->renderSuffix() !== "" || $datePart->renderPrefix() !== "";
         });
         return $result->count() > 0;
+    }
+
+    /**
+     * @param string $var
+     * @return string
+     */
+    private function renderStyles(string $var): string
+    {
+        return $this->stylesRenderer->renderAffixes(
+            $this->stylesRenderer->renderFormatting(
+                $this->stylesRenderer->renderTextCase($var)
+            )
+        );
     }
 }
