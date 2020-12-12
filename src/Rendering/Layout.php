@@ -145,10 +145,9 @@ class Layout implements Rendering
         $margin = array_filter($margin);
         if (!empty($inMargin) && !empty($margin) && CiteProc::getContext()->isModeBibliography()) {
             $leftMargin = $this->removeConsecutiveChars($this->htmlentities($this->format(implode("", $inMargin))));
-            $rightInline = $this->removeConsecutiveChars(
-                $this->htmlentities($this->format(implode("", $margin))).
-                $this->suffix
-            );
+            $result = $this->htmlentities($this->format(implode("", $margin)));
+            $result = rtrim($result, $this->suffix) . $this->suffix;
+            $rightInline = $this->removeConsecutiveChars($result);
             $res  = '<div class="csl-left-margin">' . trim($leftMargin) . '</div>';
             $res .= '<div class="csl-right-inline">' . trim($rightInline) . '</div>';
             return $res;

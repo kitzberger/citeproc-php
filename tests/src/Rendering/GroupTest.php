@@ -94,4 +94,9 @@ class GroupTest extends TestCase
     {
         $this->runTestSuite("group_retrieved");
     }
+
+    public function testGroupPunctuation()
+    {
+        $this->runTestSuite('group_punctuation');
+    }
 }

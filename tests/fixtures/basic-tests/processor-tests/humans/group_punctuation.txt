@@ -1,0 +1,38 @@
+>>===== MODE =====>>
+bibliography
+<<===== MODE =====<<
+
+>>===== RESULT =====>>
+<div class="csl-bib-body">
+  <div class="csl-entry"><div class="csl-left-margin">[1]</div><div class="csl-right-inline">Example. 7, 206–209.</div></div>
+</div>
+<<===== RESULT =====<<
+
+>>===== CSL =====>>
+<style xmlns="http://purl.org/net/xbiblio/csl" default-locale="en-US">
+  <bibliography entry-spacing="0" second-field-align="flush" et-al-min="15" et-al-use-first="1">
+    <layout suffix=".">
+      <text variable="citation-number" prefix="[" suffix="]"/>
+      <group delimiter=". " suffix=".">
+        <text variable="title"/>
+        <group delimiter=", ">
+          <text variable="volume"/>
+          <text variable="page"/>
+        </group>
+      </group>
+    </layout>
+  </bibliography>
+</style>
+
+<<===== CSL =====<<
+
+>>===== INPUT =====>>
+[
+    {
+        "page": "206-209", 
+        "title": "Example", 
+        "type": "article-journal", 
+        "volume": 7
+    }
+]
+<<===== INPUT =====<<
