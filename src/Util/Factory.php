@@ -11,6 +11,7 @@ namespace Seboettg\CiteProc\Util;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Date\Date;
+use Seboettg\CiteProc\Rendering\Group;
 use Seboettg\CiteProc\Rendering\Label\Label;
 use Seboettg\CiteProc\Rendering\Number\Number;
 use Seboettg\CiteProc\Rendering\Text\Text;
@@ -55,7 +56,8 @@ class Factory
         Label::class,
         Number::class,
         Text::class,
-        Date::class
+        Date::class,
+        Group::class
     ];
 
     /**

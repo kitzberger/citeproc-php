@@ -12,11 +12,8 @@ namespace Seboettg\CiteProc\Rendering;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Label\Label;
 use Seboettg\CiteProc\Rendering\Text\Text;
-use Seboettg\CiteProc\Styles\AffixesTrait;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
-use Seboettg\CiteProc\Styles\DelimiterTrait;
-use Seboettg\CiteProc\Styles\DisplayTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Util\Factory;
 use Seboettg\CiteProc\Util\StringHelper;
 use Seboettg\Collection\ArrayList;
@@ -32,16 +29,15 @@ use SimpleXMLElement;
  * called are empty. This accommodates descriptive cs:text elements.
  *
  * @package Seboettg\CiteProc\Rendering
- *
- * @author Sebastian Böttger <seboettg@gmail.com>
  */
 class Group implements Rendering, HasParent
 {
-    use DelimiterTrait,
-        AffixesTrait,
-        DisplayTrait,
-        FormattingTrait,
-        ConsecutivePunctuationCharacterTrait;
+    use ConsecutivePunctuationCharacterTrait;
+
+    /**
+     * @var StylesRenderer
+     */
+    private $stylesRenderer;
 
     /**
      * @var ArrayList
@@ -58,29 +54,66 @@ class Group implements Rendering, HasParent
     private $parent;
 
     /**
-     * @var array
-     */
-    private $renderedChildsWithVariable = [];
-
-
-    /**
-     * Group constructor.
-     *
-     * @param  SimpleXMLElement $node
-     * @param  $parent
+     * @param SimpleXMLElement $node
+     * @return Group
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public static function factory(SimpleXMLElement $node): Group
     {
-        $this->parent = $parent;
-        $this->children = new ArrayList();
+        $children = new ArrayList();
+        $group = new self();
         foreach ($node->children() as $child) {
-            $this->children->append(Factory::create($child, $this));
+            $children->append(Factory::create($child, $group));
         }
-        $this->initDisplayAttributes($node);
-        $this->initAffixesAttributes($node);
-        $this->initDelimiterAttributes($node);
-        $this->initFormattingAttributes($node);
+        $stylesRenderer = StylesRenderer::factory($node);
+        $group->setChildren($children);
+        $group->setStylesRenderer($stylesRenderer);
+        $group->setDelimiter((string)$node->attributes()['delimiter']);
+        return $group;
+    }
+
+    public function __construct()
+    {
+        $this->children = new ArrayList();
+    }
+
+    private function setChildren(ArrayList\ArrayListInterface $children)
+    {
+        $this->children = $children;
+    }
+
+    private function setStylesRenderer(StylesRenderer $stylesRenderer)
+    {
+        $this->stylesRenderer = $stylesRenderer;
+    }
+
+    private function setDelimiter(string $delimiter)
+    {
+        $this->delimiter = $delimiter;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasDelimiter(): bool
+    {
+        return !empty($this->delimiter);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDelimiter(): string
+    {
+        return $this->delimiter;
     }
 
     /**
@@ -88,7 +121,7 @@ class Group implements Rendering, HasParent
      * @param  int|null $citationNumber
      * @return string
      */
-    public function render($data, $citationNumber = null)
+    public function render($data, $citationNumber = null): string
     {
         $textParts = [];
         $terms = $variables = $haveVariables = $elementCount = 0;
@@ -124,11 +157,11 @@ class Group implements Rendering, HasParent
                 }
                 $textParts[] = $text;
 
-                if (method_exists($child, "getSource") && $child->getSource() == 'variable'
-                    || (method_exists(
-                        $child,
-                        "getVariable"
-                    ) && $child->getVariable() != "date" && !empty($child->getVariable()))
+                if (method_exists($child, "getSource") && $child->getSource() == 'variable' ||
+                    (
+                        method_exists($child, "getVariable") &&
+                        $child->getVariable() !== "date" && !empty($child->getVariable())
+                    )
                 ) {
                     $haveVariables++;
                 }
@@ -142,21 +175,13 @@ class Group implements Rendering, HasParent
     }
 
     /**
-     * @return mixed
-     */
-    public function getParent()
-    {
-        return $this->parent;
-    }
-
-    /**
      * @param  $textParts
      * @param  $variables
      * @param  $haveVariables
      * @param  $terms
      * @return string
      */
-    protected function formatting($textParts, $variables, $haveVariables, $terms)
+    protected function formatting($textParts, $variables, $haveVariables, $terms): string
     {
         if (empty($textParts)) {
             return "";
@@ -173,25 +198,13 @@ class Group implements Rendering, HasParent
         $text = StringHelper::implodeAndPreventConsecutiveChars($this->delimiter, $textParts);
 
         if (!empty($text)) {
-            return $this->wrapDisplayBlock($this->addAffixes($this->format(($text))));
+            return $this->stylesRenderer->renderDisplay(
+                $this->stylesRenderer->renderAffixes(
+                    $this->stylesRenderer->renderFormatting($text)
+                )
+            );
         }
 
         return "";
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasDelimiter()
-    {
-        return !empty($this->delimiter);
-    }
-
-    /**
-     * @return string
-     */
-    public function getDelimiter()
-    {
-        return $this->delimiter;
     }
 }

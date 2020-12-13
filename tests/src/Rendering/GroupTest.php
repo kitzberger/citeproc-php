@@ -13,10 +13,12 @@ use Seboettg\CiteProc\Config\RenderingMode as Mode;
 use PHPUnit\Framework\TestCase;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Context;
+use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Config;
 use Seboettg\CiteProc\Rendering\Group;
 use Seboettg\CiteProc\Test\TestSuiteTestCaseTrait;
+use SimpleXMLElement;
 
 class GroupTest extends TestCase
 {
@@ -33,24 +35,33 @@ class GroupTest extends TestCase
         CiteProc::setContext($context);
     }
 
+    /**
+     * @throws InvalidStylesheetException
+     */
     public function testRenderDelimiter()
     {
         $str = '<group delimiter=" "><text term="retrieved"/><text term="from"/><text variable="URL"/></group>';
-        $group = new Group(new \SimpleXMLElement($str), null);
+        $group = Group::factory(new SimpleXMLElement($str));
         $this->assertEquals("abgerufen von http://foo.bar", $group->render(json_decode($this->data)));
     }
 
+    /**
+     * @throws InvalidStylesheetException
+     */
     public function testRenderAffixes()
     {
         $str = '<group prefix="[" suffix="]" delimiter=" "><text term="retrieved"/><text term="from"/><text variable="URL"/></group>';
-        $group = new Group(new \SimpleXMLElement($str), null);
+        $group = Group::factory(new SimpleXMLElement($str));
         $this->assertEquals("[abgerufen von http://foo.bar]", $group->render(json_decode($this->data)));
     }
 
+    /**
+     * @throws InvalidStylesheetException
+     */
     public function testRenderDisplay()
     {
         $str = '<group display="indent" prefix="[" suffix="]" delimiter=" "><text term="retrieved"/><text term="from"/><text variable="URL"/></group>';
-        $group = new Group(new \SimpleXMLElement($str), null);
+        $group = Group::factory(new SimpleXMLElement($str));
         $this->assertEquals("<div class=\"csl-indent\">[abgerufen von http://foo.bar]</div>", $group->render(json_decode($this->data)));
     }
 

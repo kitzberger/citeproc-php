@@ -41,6 +41,11 @@ class Date implements RenderingObserver
     const DATE_RANGE_STATE_YEARMONTH    = 6; // 110
     const DATE_RANGE_STATE_YEARMONTHDAY = 7; // 111
 
+    /**
+     * @param SimpleXMLElement $node
+     * @return Date
+     * @throws InvalidStylesheetException
+     */
     public static function factory(SimpleXMLElement $node)
     {
         $variable = $form = $datePartsAttribute = "";

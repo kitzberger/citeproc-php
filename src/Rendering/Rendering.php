@@ -25,7 +25,7 @@ interface Rendering
     /**
      * @param array|DataList|stdClass $data
      * @param int|null $citationNumber
-     * @return string
+     * @return string|array
      */
     public function render($data, $citationNumber = []);
 }
