@@ -11,6 +11,7 @@ namespace Seboettg\CiteProc\Util;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Date\Date;
+use Seboettg\CiteProc\Rendering\Date\DatePart;
 use Seboettg\CiteProc\Rendering\Group;
 use Seboettg\CiteProc\Rendering\Label\Label;
 use Seboettg\CiteProc\Rendering\Name\EtAl;
@@ -59,7 +60,8 @@ class Factory
         Text::class,
         Date::class,
         Group::class,
-        EtAl::class
+        EtAl::class,
+        DatePart::class,
     ];
 
     /**

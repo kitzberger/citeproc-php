@@ -10,12 +10,11 @@
 namespace Seboettg\CiteProc\Rendering\Date;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Layout;
-use Seboettg\CiteProc\Rendering\Number;
-use Seboettg\CiteProc\Styles\AffixesTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
-use Seboettg\CiteProc\Styles\RangeDelimiterTrait;
-use Seboettg\CiteProc\Styles\TextCaseTrait;
+use Seboettg\CiteProc\Rendering\Number\Number;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
 
 /**
@@ -24,70 +23,70 @@ use SimpleXMLElement;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class DatePart
+class DatePart implements HasParent
 {
 
     const DEFAULT_RANGE_DELIMITER = "–";
 
-    use FormattingTrait,
-        AffixesTrait,
-        TextCaseTrait,
-        RangeDelimiterTrait;
-
-    /**
-     * @var string
-     */
+    /** @var string|null */
     private $name;
 
-    /**
-     * @var string
-     */
+    /** @var string|null */
     private $form;
 
-    /**
-     * @var string
-     */
+    /** @var string|null */
     private $rangeDelimiter;
 
-    /**
-     * @var Date
-     */
+    /** @var Date */
     private $parent;
 
-    public function __construct(SimpleXMLElement $node)
+    /** @var StylesRenderer */
+    private $stylesRenderer;
+
+    /** @var Number */
+    private $number;
+
+    /** @var Locale */
+    private $locale;
+
+    public static function factory(SimpleXMLElement $node): DatePart
     {
-        foreach ($node->attributes() as $attribute) {
-            if ("name" === $attribute->getName()) {
-                $this->name = (string) $attribute;
-            }
-            if ("form" === $attribute->getName()) {
-                $this->form = (string) $attribute;
-            }
-            if ("range-delimiter" === $attribute->getName()) {
-                $this->rangeDelimiter = (string) $attribute;
-            }
-        }
-
-        if (empty($this->rangeDelimiter)) {
-            $this->rangeDelimiter = self::DEFAULT_RANGE_DELIMITER;
-        }
-
-        $this->initFormattingAttributes($node);
-        $this->initAffixesAttributes($node);
-        $this->initTextCaseAttributes($node);
+        $name = (string) $node->attributes()['name'];
+        $form = (string) $node->attributes()['form'];
+        $rangeDelimiter = (string) $node->attributes()['range-delimiter'];
+        $rangeDelimiter = empty($rangeDelimiter) ? self::DEFAULT_RANGE_DELIMITER : $rangeDelimiter;
+        $stylesRenderer = StylesRenderer::factory($node);
+        $locale = CiteProc::getContext()->getLocale();
+        $number = new Number(null, null, $locale, $stylesRenderer);
+        return new self($name, $form, $rangeDelimiter, $stylesRenderer, $number, $locale);
     }
 
+    public function __construct(
+        ?string $name,
+        ?string $form,
+        ?string $rangeDelimiter,
+        StylesRenderer $stylesRenderer,
+        Number $number,
+        Locale $locale
+    ) {
+        $this->name = $name;
+        $this->form = $form;
+        $this->rangeDelimiter = $rangeDelimiter;
+        $this->stylesRenderer = $stylesRenderer;
+        $this->number = $number;
+        $this->locale = $locale;
+    }
 
     /**
      * @param DateTime $date
      * @param Date $parent
      * @return string
      */
-    public function render(DateTime $date, Date $parent)
+    public function render(DateTime $date, Date $parent): string
     {
         $this->parent = $parent; //set parent
         $text = $this->renderWithoutAffixes($date);
-        return !empty($text) ? $this->addAffixes($text) : "";
+        return !empty($text) ? $this->stylesRenderer->renderAffixes($text) : "";
     }
 
     /**
@@ -95,7 +94,7 @@ class DatePart
      * @param Date|null $parent
      * @return string
      */
-    public function renderWithoutAffixes(DateTime $date, Date $parent = null)
+    public function renderWithoutAffixes(DateTime $date, Date $parent = null): string
     {
         if (!is_null($parent)) {
             $this->parent = $parent;
@@ -112,7 +111,9 @@ class DatePart
                 $text = $this->renderDay($date);
         }
 
-        return !empty($text) ? $this->format($this->applyTextCase($text)) : "";
+        return !empty($text) ? $this->stylesRenderer->renderFormatting(
+            $this->stylesRenderer->renderTextCase($text)
+        ) : "";
     }
 
     /**
@@ -147,11 +148,11 @@ class DatePart
     {
         $text = $date->getYear();
         if ($text > 0 && $text < 1000) {
-            $text = $text . CiteProc::getContext()->getLocale()->filter("terms", "ad")->single;
+            $text = $text . $this->locale->filter("terms", "ad")->single;
             return $text;
         } elseif ($text < 0) {
             $text = $text * -1;
-            $text = $text . CiteProc::getContext()->getLocale()->filter("terms", "bc")->single;
+            $text = $text . $this->locale->filter("terms", "bc")->single;
             return $text;
         }
         return $text;
@@ -207,7 +208,7 @@ class DatePart
                 $limitDayOrdinals =
                     CiteProc::getContext()->getLocale()->filter("options", "limit-day-ordinals-to-day-1");
                 if (!$limitDayOrdinals || Layout::getNumberOfCitedItems() <= 1) {
-                    $text = Number::ordinal($text);
+                    $text = $this->number->ordinal($text);
                 }
         }
         return $text;
@@ -224,7 +225,22 @@ class DatePart
             $form = "long";
         }
         $month = 'month-' . sprintf('%02d', $text);
-        $text = CiteProc::getContext()->getLocale()->filter('terms', $month, $form)->single;
+        $text = $this->locale->filter('terms', $month, $form)->single;
         return $text;
+    }
+
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
+    }
+
+    public function getAffixes()
+    {
+        return $this->stylesRenderer->getAffixes();
     }
 }

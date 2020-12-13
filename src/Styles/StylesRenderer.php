@@ -44,7 +44,7 @@ class StylesRenderer
                     $textCase = new TextCase((string) $attribute);
                     break;
                 case 'display':
-                    $display = new Display((string )$attribute);
+                    $display = new Display((string) $attribute);
                     break;
                 case 'quotes':
                     $quotes = "true" === (string) $attribute;

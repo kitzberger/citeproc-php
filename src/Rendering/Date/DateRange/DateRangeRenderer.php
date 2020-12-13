@@ -30,7 +30,7 @@ abstract class DateRangeRenderer
      * @param  int  $toRender
      * @return DateRangeRenderer
      */
-    public static function factory(Date $dateObject, $toRender)
+    public static function factory(Date $dateObject, int $toRender)
     {
         $className = self::getRenderer($toRender);
         return new $className($dateObject);
@@ -93,23 +93,24 @@ abstract class DateRangeRenderer
      */
     protected function renderOneRangePart(DatePart $datePart, DateTime $from, DateTime $to, $delimiter)
     {
-        $prefix = $datePart->renderPrefix();
+        $prefix = $datePart->getAffixes()->getPrefix();
         $from = $datePart->renderWithoutAffixes($from, $this->parentDateObject);
         $to = $datePart->renderWithoutAffixes($to, $this->parentDateObject);
-        $suffix = !empty($to) ? $datePart->renderSuffix() : "";
+        $suffix = !empty($to) ? $datePart->getAffixes()->getSuffix() : "";
         return $prefix . $from . $delimiter . $to . $suffix;
     }
 
     protected function renderDateParts($dateParts, $from, $to, $delimiter)
     {
         $ret = "";
+        /** @var $datePart */
         foreach ($dateParts as $datePart) {
             if (is_array($datePart)) {
                 $renderedFrom  = $datePart[0]->render($from, $this->parentDateObject);
-                $renderedFrom .= $datePart[1]->renderPrefix();
+                $renderedFrom .= $datePart[1]->getAffixes()->getPrefix();
                 $renderedFrom .= $datePart[1]->renderWithoutAffixes($from, $this->parentDateObject);
                 $renderedTo  = $datePart[0]->renderWithoutAffixes($to, $this->parentDateObject);
-                $renderedTo .= $datePart[0]->renderSuffix();
+                $renderedTo .= $datePart[0]->getAffixes()->getSuffix();
                 $renderedTo .= $datePart[1]->render($to, $this->parentDateObject);
                 $ret .= $renderedFrom . $delimiter . $renderedTo;
             } else {

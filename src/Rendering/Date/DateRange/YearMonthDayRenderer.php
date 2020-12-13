@@ -31,7 +31,7 @@ class YearMonthDayRenderer extends DateRangeRenderer
         $i = 0;
         foreach ($dateParts as $datePart) {
             if ($i === $dateParts->count() - 1) {
-                $ret .= $datePart->renderPrefix();
+                $ret .= $datePart->getAffixes()->getPrefix();
                 $ret .= $datePart->renderWithoutAffixes($from, $this->parentDateObject);
             } else {
                 $ret .= $datePart->render($from, $this->parentDateObject);
@@ -44,7 +44,7 @@ class YearMonthDayRenderer extends DateRangeRenderer
         foreach ($dateParts as $datePart) {
             if ($i == 0) {
                 $ret .= $datePart->renderWithoutAffixes($to, $this->parentDateObject);
-                $ret .= $datePart->renderSuffix();
+                $ret .= $datePart->getAffixes()->getSuffix();
             } else {
                 $ret .= $datePart->render($to, $this->parentDateObject);
             }

@@ -366,7 +366,7 @@ class Date implements HasParent, RenderingObserver
                 foreach ($dateParts as $datePart) {
                     $this->dateParts->add(
                         "$form-$datePart",
-                        new DatePart(
+                        DatePart::factory(
                             new SimpleXMLElement('<date-part name="'.$datePart.'" form="'.$form.'" />')
                         )
                     );
@@ -423,7 +423,7 @@ class Date implements HasParent, RenderingObserver
     private function datePartsHaveAffixes()
     {
         $result = $this->dateParts->filter(function (DatePart $datePart) {
-            return $datePart->renderSuffix() !== "" || $datePart->renderPrefix() !== "";
+            return !empty($datePart->getAffixes()->getSuffix()) || !empty($datePart->getAffixes()->getPrefix());
         });
         return $result->count() > 0;
     }
