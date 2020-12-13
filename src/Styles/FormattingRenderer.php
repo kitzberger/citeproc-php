@@ -52,7 +52,7 @@ final class FormattingRenderer implements StylesRendererInterface
         $this->formattingOptions->add($option, $optionValue);
     }
 
-    public function render(string $text): string
+    public function render(?string $text): string
     {
         if (empty($text)) {
             return $text;

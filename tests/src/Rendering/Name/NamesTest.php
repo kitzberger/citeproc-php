@@ -43,4 +43,9 @@ class NamesTest extends TestCase
         //$this->_testRenderTestSuite("name_EtAlWithCombined");
     }
     */
+
+    public function testEtAlFormatting()
+    {
+        $this->runTestSuite("name_etalFormatting");
+    }
 }

@@ -1,0 +1,73 @@
+>>===== MODE =====>>
+citation
+<<===== MODE =====<<
+
+>>===== RESULT =====>>
+Horkheimer <i>et al</i>, 1959.
+<<===== RESULT =====<<
+
+>>===== CSL =====>>
+<style
+      xmlns="http://purl.org/net/xbiblio/csl"
+      class="note"
+      version="1.0">
+  <info>
+    <id />
+    <title />
+    <updated>2009-08-10T04:49:00+09:00</updated>
+  </info>
+  <locale xml:lang="en">
+    <terms>
+      <term name="et-al">et al</term>
+    </terms>
+  </locale>
+  <citation et-al-min="3" et-al-use-first="1">
+    <layout suffix=".">
+      <group delimiter=", ">
+        <names variable="author">
+          <name form="short" and="text" delimiter=", " initialize-with="."/>
+          <et-al font-style="italic"/>
+        </names>
+        <date variable="issued">
+          <date-part name="year"/>
+        </date>
+      </group>
+    </layout>
+  </citation>
+</style>
+<<===== CSL =====<<
+
+
+>>===== INPUT =====>>
+[
+    {
+        "author": [
+            {
+                "family": "Horkheimer", 
+                "given": "Max"
+            }, 
+            {
+                "family": "Adorno", 
+                "given": "Theodor W."
+            }, 
+            {
+                "family": "Marcuse", 
+                "given": "Herbert"
+            }, 
+            {
+                "family": "Habermas", 
+                "given": "Jürgen"
+            }
+        ], 
+        "id": "ITEM-1", 
+        "issued": {
+            "date-parts": [
+                [
+                    1959
+                ]
+            ]
+        }, 
+        "type": "book"
+    }
+]
+<<===== INPUT =====<<

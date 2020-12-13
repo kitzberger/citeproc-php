@@ -11,8 +11,9 @@ namespace Seboettg\CiteProc\Rendering\Name;
 
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Data\DataList;
+use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Rendering\Rendering;
-use Seboettg\CiteProc\Styles\FormattingTrait;
+use Seboettg\CiteProc\Styles\FormattingRenderer;
 use SimpleXMLElement;
 use stdClass;
 
@@ -29,23 +30,34 @@ use stdClass;
  */
 class EtAl implements Rendering
 {
-    use FormattingTrait;
-
+    /** @var string */
     private $term;
 
-    public function __construct(SimpleXMLElement $node)
+    /** @var Locale */
+    private $locale;
+
+    /** @var FormattingRenderer */
+    private $formattingRenderer;
+
+    /**
+     * @param SimpleXMLElement $node
+     * @return EtAl
+     */
+    public static function factory(SimpleXMLElement $node): EtAl
     {
-        /**
-         * @var SimpleXMLElement $attribute
-         */
-        foreach ($node->attributes() as $attribute) {
-            switch ($attribute->getName()) {
-                case 'term':
-                    $this->term = (string) $attribute;
-                    break;
-            }
-        }
-        $this->initFormattingAttributes($node);
+        $term = (string)$node->attributes()['term'];
+        // The term attribute may be set to either “et-al” (the default) or to “and others” to use either term.
+        $term = empty($term) ? "et-al" : $term;
+        $locale = CiteProc::getContext()->getLocale();
+        $formattingRenderer = FormattingRenderer::factory($node);
+        return new self($term, $locale, $formattingRenderer);
+    }
+
+    public function __construct(?string $term, Locale $locale, FormattingRenderer $formattingRenderer)
+    {
+        $this->term = $term;
+        $this->locale = $locale;
+        $this->formattingRenderer = $formattingRenderer;
     }
 
     /**
@@ -55,6 +67,8 @@ class EtAl implements Rendering
      */
     public function render($data, $citationNumber = null)
     {
-        return $this->format(CiteProc::getContext()->getLocale()->filter('terms', $this->term)->single);
+        return $this->formattingRenderer->render(
+            $this->locale->filter('terms', $this->term)->single
+        );
     }
 }

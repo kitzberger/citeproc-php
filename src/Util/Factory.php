@@ -13,6 +13,7 @@ use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Date\Date;
 use Seboettg\CiteProc\Rendering\Group;
 use Seboettg\CiteProc\Rendering\Label\Label;
+use Seboettg\CiteProc\Rendering\Name\EtAl;
 use Seboettg\CiteProc\Rendering\Number\Number;
 use Seboettg\CiteProc\Rendering\Text\Text;
 use Seboettg\CiteProc\StyleSheet;
@@ -57,7 +58,8 @@ class Factory
         Number::class,
         Text::class,
         Date::class,
-        Group::class
+        Group::class,
+        EtAl::class
     ];
 
     /**
