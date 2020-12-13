@@ -125,8 +125,13 @@ class StylesRenderer
         return $this->quotes->render($text);
     }
 
-    public function getTextCase()
+    public function getTextCase(): TextCaseRenderer
     {
         return $this->textCase;
+    }
+
+    public function getAffixes(): AffixesRenderer
+    {
+        return $this->affixes;
     }
 }

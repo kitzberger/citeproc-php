@@ -14,6 +14,7 @@ use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Date\DateRange\DateRangeRenderer;
+use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Styles\StylesRenderer;
@@ -27,7 +28,7 @@ use SimpleXMLElement;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Date implements RenderingObserver
+class Date implements HasParent, RenderingObserver
 {
     use RenderingObserverTrait;
 
@@ -41,12 +42,45 @@ class Date implements RenderingObserver
     const DATE_RANGE_STATE_YEARMONTH    = 6; // 110
     const DATE_RANGE_STATE_YEARMONTHDAY = 7; // 111
 
+
+    private static $localizedDateFormats = [
+        'numeric',
+        'text'
+    ];
+
+    /**
+     * @var ArrayList
+     */
+    private $dateParts;
+
+    /**
+     * @var string
+     */
+    private $form = "";
+
+    /**
+     * @var string
+     */
+    private $variable = "";
+
+    /**
+     * @var string
+     */
+    private $datePartsAttribute = "";
+
+    /**
+     * @var StylesRenderer
+     */
+    private $stylesRenderer;
+
+    private $parent;
+
     /**
      * @param SimpleXMLElement $node
      * @return Date
      * @throws InvalidStylesheetException
      */
-    public static function factory(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): Date
     {
         $variable = $form = $datePartsAttribute = "";
         $dateParts = new ArrayList();
@@ -91,36 +125,6 @@ class Date implements RenderingObserver
         $this->dateParts = $dateParts;
         $this->stylesRenderer = $stylesRenderer;
     }
-
-    private static $localizedDateFormats = [
-        'numeric',
-        'text'
-    ];
-
-    /**
-     * @var ArrayList
-     */
-    private $dateParts;
-
-    /**
-     * @var string
-     */
-    private $form = "";
-
-    /**
-     * @var string
-     */
-    private $variable = "";
-
-    /**
-     * @var string
-     */
-    private $datePartsAttribute = "";
-
-    /**
-     * @var StylesRenderer
-     */
-    private $stylesRenderer;
 
     /**
      * @param $data
@@ -435,5 +439,15 @@ class Date implements RenderingObserver
                 $this->stylesRenderer->renderTextCase($var)
             )
         );
+    }
+
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
     }
 }

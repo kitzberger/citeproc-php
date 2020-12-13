@@ -111,4 +111,9 @@ class Macro implements Rendering, HasParent
     {
         return $this->parent;
     }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
+    }
 }

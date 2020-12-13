@@ -67,4 +67,36 @@ final class AffixesRenderer implements StylesRendererInterface
         }
         return $prefix . $text . $suffix;
     }
+
+    /**
+     * @return string
+     */
+    public function getPrefix(): ?string
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSuffix(): ?string
+    {
+        return $this->suffix;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPunctuationInQuote(): ?bool
+    {
+        return $this->punctuationInQuote;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCloseQuote(): ?string
+    {
+        return $this->closeQuote;
+    }
 }

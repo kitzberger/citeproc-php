@@ -13,7 +13,7 @@ use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\HasParent;
-use Seboettg\CiteProc\Rendering\Label;
+use Seboettg\CiteProc\Rendering\Label\Label;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Style\InheritableNameAttributesTrait;
@@ -117,7 +117,7 @@ class Names implements Rendering, HasParent
      * @param  $parent
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public function __construct(SimpleXMLElement $node, $parent = null)
     {
         $this->initInheritableNameAttributes($node);
         $this->parent = $parent;
@@ -377,5 +377,10 @@ class Names implements Rendering, HasParent
         return array_filter($results, function ($item) {
             return !empty($item);
         });
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
     }
 }

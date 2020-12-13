@@ -17,4 +17,5 @@ namespace Seboettg\CiteProc\Rendering;
 interface HasParent
 {
     public function getParent();
+    public function setParent($parent);
 }

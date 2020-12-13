@@ -62,7 +62,8 @@ abstract class StyleElement
                  * formatting attributes.
                  */
                 case 'layout':
-                    $this->layout = new Layout($child, $this);
+                    $this->layout = Layout::factory($child);
+                    $this->layout->setParent($this);
                     break;
 
                 /* cs:citation and cs:bibliography may include a cs:sort child element before the cs:layout element to

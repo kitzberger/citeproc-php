@@ -11,6 +11,7 @@ namespace Seboettg\CiteProc\Rendering\Number;
 
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Styles\TextCase;
@@ -24,7 +25,7 @@ use stdClass;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Number implements Rendering
+class Number implements HasParent, Rendering
 {
 
     private const RANGE_DELIMITER_HYPHEN = "-";
@@ -72,6 +73,8 @@ class Number implements Rendering
 
     /** @var StylesRenderer */
     private $stylesRenderer;
+
+    private $parent;
 
     public function __construct(
         ?string $variable,
@@ -234,5 +237,15 @@ class Number implements Rendering
             }
         }
         return $decimalNumber;
+    }
+
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
     }
 }

@@ -42,7 +42,7 @@ class Choose implements Rendering, HasParent
      * @throws ClassNotFoundException
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public function __construct(SimpleXMLElement $node, $parent = null)
     {
         $this->parent = $parent;
         $this->children = new ArrayList();
@@ -105,5 +105,10 @@ class Choose implements Rendering, HasParent
     public function getParent()
     {
         return $this->parent;
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
     }
 }

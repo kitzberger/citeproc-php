@@ -207,4 +207,9 @@ class Group implements Rendering, HasParent
 
         return "";
     }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
+    }
 }

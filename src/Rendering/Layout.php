@@ -11,13 +11,10 @@ namespace Seboettg\CiteProc\Rendering;
 
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Data\DataList;
-use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Config\RenderingState;
-use Seboettg\CiteProc\Style\StyleElement;
-use Seboettg\CiteProc\Styles\AffixesTrait;
+use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
-use Seboettg\CiteProc\Styles\DelimiterTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Util\CiteProcHelper;
 use Seboettg\CiteProc\Util\Factory;
 use Seboettg\CiteProc\Util\StringHelper;
@@ -34,12 +31,9 @@ use stdClass;
  */
 class Layout implements Rendering
 {
-    private static $numberOfCitedItems = 0;
+    use ConsecutivePunctuationCharacterTrait;
 
-    use AffixesTrait,
-        FormattingTrait,
-        DelimiterTrait,
-        ConsecutivePunctuationCharacterTrait;
+    private static $numberOfCitedItems = 0;
 
     /**
      * @var ArrayList
@@ -58,21 +52,34 @@ class Layout implements Rendering
     private $parent;
 
     /**
-     * @param  SimpleXMLElement $node
-     * @param  StyleElement     $parent
+     * @var StylesRenderer
+     */
+    private $stylesRenderer;
+
+    /**
+     * @param SimpleXMLElement $node
+     * @return Layout
      * @throws InvalidStylesheetException
      */
-    public function __construct($node, $parent)
+    public static function factory(SimpleXMLElement $node): Layout
     {
-        $this->parent = $parent;
-        self::$numberOfCitedItems = 0;
-        $this->children = new ArrayList();
-        foreach ($node->children() as $child) {
-            $this->children->append(Factory::create($child, $this));
+        $children = new ArrayList();
+        $layout = new Layout();
+        foreach ($node->children() as $csChild) {
+            $child = Factory::create($csChild);
+            $child->setParent($layout);
+            $children->append($child);
         }
-        $this->initDelimiterAttributes($node);
-        $this->initAffixesAttributes($node);
-        $this->initFormattingAttributes($node);
+        $stylesRenderer = StylesRenderer::factory($node);
+        $layout->setChildren($children);
+        $layout->setStylesRenderer($stylesRenderer);
+        $layout->setDelimiter((string)$node->attributes()['delimiter']);
+        return $layout;
+    }
+
+    public function __construct()
+    {
+        $this->children = new ArrayList();
     }
 
     /**
@@ -113,7 +120,7 @@ class Layout implements Rendering
             }
         }
         $ret = StringHelper::clearApostrophes($ret);
-        return $this->addAffixes($ret);
+        return $this->stylesRenderer->renderAffixes($ret);
     }
 
     /**
@@ -144,15 +151,18 @@ class Layout implements Rendering
         $inMargin = array_filter($inMargin);
         $margin = array_filter($margin);
         if (!empty($inMargin) && !empty($margin) && CiteProc::getContext()->isModeBibliography()) {
-            $leftMargin = $this->removeConsecutiveChars($this->htmlentities($this->format(implode("", $inMargin))));
-            $result = $this->htmlentities($this->format(implode("", $margin)));
-            $result = rtrim($result, $this->suffix) . $this->suffix;
+            $leftMargin = $this->removeConsecutiveChars(
+                $this->htmlentities($this->stylesRenderer->renderFormatting(implode("", $inMargin)))
+            );
+            $result = $this->htmlentities($this->stylesRenderer->renderFormatting(implode("", $margin)));
+            $result = rtrim($result, $this->stylesRenderer->getAffixes()->getSuffix()) .
+                $this->stylesRenderer->getAffixes()->getSuffix();
             $rightInline = $this->removeConsecutiveChars($result);
             $res  = '<div class="csl-left-margin">' . trim($leftMargin) . '</div>';
             $res .= '<div class="csl-right-inline">' . trim($rightInline) . '</div>';
             return $res;
         } elseif (!empty($inMargin)) {
-            $res = $this->format(implode("", $inMargin));
+            $res = $this->stylesRenderer->renderFormatting(implode("", $inMargin));
             return $this->htmlentities($this->removeConsecutiveChars($res));
         }
         return "";
@@ -161,7 +171,7 @@ class Layout implements Rendering
     /**
      * @return int
      */
-    public static function getNumberOfCitedItems()
+    public static function getNumberOfCitedItems(): int
     {
         return self::$numberOfCitedItems;
     }
@@ -171,9 +181,9 @@ class Layout implements Rendering
      * @param  string   $value
      * @return string
      */
-    private function wrapBibEntry($dataItem, $value)
+    private function wrapBibEntry($dataItem, $value): string
     {
-        $value = $this->addAffixes($value);
+        $value = $this->stylesRenderer->renderAffixes($value);
         return "\n  ".
             "<div class=\"csl-entry\">" .
             $renderedItem = CiteProcHelper::applyAdditionMarkupFunction($dataItem, "csl-entry", $value) .
@@ -253,11 +263,33 @@ class Layout implements Rendering
         foreach ($citationItems as $citationItemGroup) {
             $data_ = $this->filterCitationItems(clone $data, $citationItemGroup);
             CiteProc::getContext()->setCitationData($data_);
-            $group[] = $this->addAffixes(StringHelper::clearApostrophes($this->renderCitations($data_, "")));
+            $group[] = $this->stylesRenderer->renderAffixes(
+                StringHelper::clearApostrophes($this->renderCitations($data_, ""))
+            );
         }
         if (CiteProc::getContext()->isCitationsAsArray()) {
             return $group;
         }
         return implode("\n", $group);
+    }
+
+    public function setChildren(ArrayList $children)
+    {
+        $this->children = $children;
+    }
+
+    public function setStylesRenderer(StylesRenderer $stylesRenderer)
+    {
+        $this->stylesRenderer = $stylesRenderer;
+    }
+
+    public function setDelimiter(string $delimiter)
+    {
+        $this->delimiter = $delimiter;
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
     }
 }

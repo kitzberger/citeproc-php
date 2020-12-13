@@ -15,6 +15,7 @@ use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Rendering\Rendering;
@@ -32,8 +33,34 @@ use stdClass;
 use function Seboettg\CiteProc\getCurrentById;
 use function Seboettg\CiteProc\ucfirst;
 
-class Text implements Rendering, RenderingObserver
+class Text implements HasParent, Rendering, RenderingObserver
 {
+    use ConsecutivePunctuationCharacterTrait;
+    use RenderingObserverTrait;
+
+    /** @var RenderType|null */
+    private $renderType;
+
+    /** @var string */
+    private $renderObject;
+
+    /** @var string */
+    private $form;
+
+    /** @var Locale|null */
+    private $locale;
+
+    /** @var ArrayListInterface */
+    private $macros;
+
+    /** @var StylesRenderer */
+    private $stylesRenderer;
+
+    /** @var GlobalOptions */
+    private $globalOptions;
+
+    private $parent;
+
     public static function factory(SimpleXMLElement $node)
     {
         $renderObject = "";
@@ -70,31 +97,6 @@ class Text implements Rendering, RenderingObserver
         $context->addObserver($text);
         return $text;
     }
-
-
-    use ConsecutivePunctuationCharacterTrait;
-    use RenderingObserverTrait;
-
-    /** @var RenderType|null */
-    private $renderType;
-
-    /** @var string */
-    private $renderObject;
-
-    /** @var string */
-    private $form;
-
-    /** @var Locale|null */
-    private $locale;
-
-    /** @var ArrayListInterface */
-    private $macros;
-
-    /** @var StylesRenderer */
-    private $stylesRenderer;
-
-    /** @var GlobalOptions */
-    private $globalOptions;
 
     /**
      * Text constructor.
@@ -322,5 +324,15 @@ class Text implements Rendering, RenderingObserver
             $renderedText = $macro->render($data);
         }
         return $renderedText;
+    }
+
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
     }
 }

@@ -646,4 +646,9 @@ class Name implements HasParent
     {
         return $this->parent;
     }
+
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
+    }
 }
