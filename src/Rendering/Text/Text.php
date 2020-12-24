@@ -61,7 +61,7 @@ class Text implements HasParent, Rendering, RenderingObserver
 
     private $parent;
 
-    public static function factory(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): Text
     {
         $renderObject = "";
         $renderType = $form = null;
@@ -133,7 +133,7 @@ class Text implements HasParent, Rendering, RenderingObserver
      * @param  int|null $citationNumber
      * @return string
      */
-    public function render($data, $citationNumber = null)
+    public function render($data, $citationNumber = null): string
     {
         $lang = (isset($data->language) && $data->language != 'en') ? $data->language : 'en';
         $this->stylesRenderer->getTextCase()->setLanguage($lang);
@@ -174,10 +174,7 @@ class Text implements HasParent, Rendering, RenderingObserver
         return $renderedText;
     }
 
-    /**
-     * @return string
-     */
-    public function getSource()
+    public function getSource(): RenderType
     {
         return $this->renderType;
     }
@@ -185,12 +182,12 @@ class Text implements HasParent, Rendering, RenderingObserver
     /**
      * @return string
      */
-    public function getVariable()
+    public function getVariable(): string
     {
         return $this->renderObject;
     }
 
-    private function renderPage($page)
+    private function renderPage($page): string
     {
         if (preg_match(NumberHelper::PATTERN_COMMA_AMPERSAND_RANGE, $page)) {
             $page = $this->normalizeDateRange($page);
@@ -211,7 +208,7 @@ class Text implements HasParent, Rendering, RenderingObserver
         return $page;
     }
 
-    private function renderLocator($data, $citationNumber)
+    private function renderLocator($data, $citationNumber): string
     {
         $citationItem = getCurrentById($this->citationItems, $data->id);
         if (!empty($citationItem->label)) {
@@ -227,7 +224,7 @@ class Text implements HasParent, Rendering, RenderingObserver
         return isset($citationItem->locator) ? trim($citationItem->locator) : '';
     }
 
-    private function normalizeDateRange($page)
+    private function normalizeDateRange($page): string
     {
         if (preg_match("/^(\d+)\s?--?\s?(\d+)$/", trim($page), $matches)) {
             return $matches[1]."-".$matches[2];
@@ -238,7 +235,7 @@ class Text implements HasParent, Rendering, RenderingObserver
     /**
      * @param  $data
      * @param  $renderedText
-     * @return mixed
+     * @return string
      */
     private function applyAdditionalMarkupFunction($data, $renderedText)
     {
@@ -249,7 +246,7 @@ class Text implements HasParent, Rendering, RenderingObserver
      * @param  $data
      * @return string
      */
-    private function renderVariable($data)
+    private function renderVariable($data): string
     {
         // check if there is an attribute with prefix short or long e.g. shortTitle or longAbstract
         // test case group_ShortOutputOnly.json
@@ -284,7 +281,7 @@ class Text implements HasParent, Rendering, RenderingObserver
      * @param  $renderedText
      * @return string
      */
-    private function formatRenderedText($renderedText)
+    private function formatRenderedText($renderedText): string
     {
         $text = $this->stylesRenderer->renderFormatting((string)$renderedText);
         $res = $this->stylesRenderer->renderAffixes($text);
@@ -300,18 +297,18 @@ class Text implements HasParent, Rendering, RenderingObserver
      * @param  $citationNumber
      * @return int|mixed
      */
-    private function renderCitationNumber($data, $citationNumber)
+    private function renderCitationNumber($data, $citationNumber): string
     {
         $renderedText = $citationNumber + 1;
         $renderedText = $this->applyAdditionalMarkupFunction($data, $renderedText);
-        return $renderedText;
+        return (string)$renderedText;
     }
 
     /**
      * @param  $data
      * @return string
      */
-    private function renderMacro($data)
+    private function renderMacro($data): string
     {
         $macro = $this->macros->get($this->renderObject);
         if (is_null($macro)) {

@@ -13,7 +13,9 @@ use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Rendering\Observer\CitationDataChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\CitationItemsChangedEvent;
+use Seboettg\CiteProc\Rendering\Observer\CitedItemsChanged;
 use Seboettg\CiteProc\Rendering\Observer\ModeChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\RenderingEvent;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObservable;
@@ -26,6 +28,7 @@ use Seboettg\CiteProc\Style\Macro;
 use Seboettg\CiteProc\Style\Options\BibliographyOptions;
 use Seboettg\CiteProc\Style\Options\CitationOptions;
 use Seboettg\CiteProc\Style\Options\GlobalOptions;
+use Seboettg\CiteProc\Style\Options\NameOptions;
 use Seboettg\CiteProc\Style\Sort\Sort;
 use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Styles\Css\CssStyle;
@@ -100,6 +103,9 @@ class Context implements RenderingObservable
     /** @var ArrayListInterface */
     private $observers;
 
+    /** @var NameOptions */
+    private $nameOptions;
+
     public function __construct($locale = null)
     {
         if (!empty($locale)) {
@@ -114,6 +120,7 @@ class Context implements RenderingObservable
         $this->citedItems = new ArrayList();
         $this->citationItems = new ArrayList();
         $this->observers = new ArrayList();
+        $this->nameOptions = new NameOptions();
     }
 
     public function addObserver(RenderingObserver $observer): void
@@ -127,6 +134,16 @@ class Context implements RenderingObservable
         foreach ($this->observers as $observer) {
             $observer->notify($event);
         }
+    }
+
+    public function getNameOptions(): NameOptions
+    {
+        return $this->nameOptions;
+    }
+
+    public function setNameOptions(NameOptions $nameOptions): void
+    {
+        $this->nameOptions = $nameOptions;
     }
 
     public function addMacro($key, $macro)
@@ -253,7 +270,7 @@ class Context implements RenderingObservable
     /**
      * @return DataList
      */
-    public function getCitationData()
+    public function getCitationData(): DataList
     {
         return $this->citationData;
     }
@@ -264,6 +281,7 @@ class Context implements RenderingObservable
     public function setCitationData($citationData)
     {
         $this->citationData = $citationData;
+        $this->notifyObservers(new CitationDataChangedEvent($citationData));
     }
 
     /**
@@ -323,7 +341,7 @@ class Context implements RenderingObservable
     /**
      * @return GlobalOptions
      */
-    public function getGlobalOptions()
+    public function getGlobalOptions(): ?GlobalOptions
     {
         return $this->globalOptions;
     }
@@ -331,7 +349,7 @@ class Context implements RenderingObservable
     /**
      * @param GlobalOptions $globalOptions
      */
-    public function setGlobalOptions(GlobalOptions $globalOptions)
+    public function setGlobalOptions(GlobalOptions $globalOptions): void
     {
         $this->globalOptions = $globalOptions;
     }
@@ -448,11 +466,12 @@ class Context implements RenderingObservable
     public function setCitedItems(ArrayListInterface $citedItems): void
     {
         $this->citedItems = $citedItems;
+        $this->notifyObservers(new CitedItemsChanged($citedItems));
     }
 
     public function appendCitedItem($citedItem)
     {
         $this->citedItems->append($citedItem);
-        return $this;
+        $this->notifyObservers(new CitedItemsChanged($this->citedItems));
     }
 }

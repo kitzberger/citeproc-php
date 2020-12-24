@@ -78,7 +78,7 @@ class BibliographyOptions
                     $this->subsequentAuthorSubstituteRule = new SubsequentAuthorSubstituteRule((string) $attribute);
                     break;
                 case 'hanging-indent':
-                    $this->hangingIndent = "true" === (string) $attribute ? true : false;
+                    $this->hangingIndent = "true" === (string) $attribute;
                     break;
                 case 'second-field-align':
                     $this->secondFieldAlign = (string) $attribute;

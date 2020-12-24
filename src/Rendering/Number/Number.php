@@ -42,7 +42,7 @@ class Number implements HasParent, Rendering
 
     private const PATTERN_NUMERIC = "/\s*(\d+)\s*([\-\–&,])\s*(\d+)\s*/";
 
-    public static function factory(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): self
     {
         $form = $variable = null;
         $context = CiteProc::getContext();
@@ -93,7 +93,7 @@ class Number implements HasParent, Rendering
      * @param int|null $citationNumber
      * @return string
      */
-    public function render($data, $citationNumber = null)
+    public function render($data, $citationNumber = null): string
     {
         $lang = (isset($data->language) && $data->language != 'en') ? $data->language : 'en';
 
@@ -165,7 +165,7 @@ class Number implements HasParent, Rendering
      * @param $num
      * @return string
      */
-    public function ordinal($num)
+    public function ordinal($num): string
     {
         if (($num / 10) % 10 == 1) {
             $ordinalSuffix = $this->locale->filter('terms', 'ordinal')->single;
@@ -188,7 +188,7 @@ class Number implements HasParent, Rendering
      * @param $num
      * @return string
      */
-    public function longOrdinal($num)
+    public function longOrdinal($num): string
     {
         $num = sprintf("%02d", $num);
         $ret = $this->locale->filter('terms', 'long-ordinal-' . $num)->single;
@@ -204,7 +204,7 @@ class Number implements HasParent, Rendering
      * @param string $delimiter
      * @return string
      */
-    public function buildNumberRangeString($num1, $num2, string $delimiter)
+    public function buildNumberRangeString($num1, $num2, string $delimiter): string
     {
 
         if (self::RANGE_DELIMITER_AMPERSAND === $delimiter) {
@@ -223,7 +223,7 @@ class Number implements HasParent, Rendering
      * @param string $number
      * @return string
      */
-    private function toDecimalNumber(string $number)
+    private function toDecimalNumber(string $number): string
     {
         $decimalNumber = $number;
         if (Util\NumberHelper::isRomanNumber($number)) {
