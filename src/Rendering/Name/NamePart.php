@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -9,10 +10,7 @@
 
 namespace Seboettg\CiteProc\Rendering\Name;
 
-use Seboettg\CiteProc\Exception\CiteProcException;
-use Seboettg\CiteProc\Styles\AffixesTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
-use Seboettg\CiteProc\Styles\TextCaseTrait;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
 
 /**
@@ -39,69 +37,47 @@ use SimpleXMLElement;
 class NamePart
 {
 
-    use FormattingTrait,
-        TextCaseTrait,
-        AffixesTrait;
-
+    /** @var string */
     private $name;
 
-    /**
-     * @var Name
-     */
-    private $parent;
+    /** @var StylesRenderer */
+    private $stylesRenderer;
 
-    /**
-     * NamePart constructor.
-     * @param SimpleXMLElement $node
-     * @param Name $parent
-     */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public static function factory(SimpleXMLElement $node): NamePart
     {
-        $this->parent = $parent;
+        $name = (string)$node['name'];
+        $stylesRenderer = StylesRenderer::factory($node);
+        return new self($name, $stylesRenderer);
+    }
 
-        /** @var SimpleXMLElement $attribute */
-        foreach ($node->attributes() as $attribute) {
-            if ($attribute->getName() === 'name') {
-                $this->name = (string) $attribute;
-            }
-        }
 
-        $this->initFormattingAttributes($node);
-        $this->initTextCaseAttributes($node);
-        $this->initAffixesAttributes($node);
+    public function __construct(string $name, StylesRenderer $stylesRenderer)
+    {
+        $this->name = $name;
+        $this->stylesRenderer = $stylesRenderer;
     }
 
     /**
      * @param $data
-     * @return mixed
-     * @throws CiteProcException
+     * @return string
      */
-    public function render($data)
+    public function render($data): string
     {
         if (!isset($data->{$this->name})) {
             return "";
         }
 
-        switch ($this->name) {
-            /* If set to “given”, formatting and text-case attributes on cs:name-part affect the “given” and
-            “dropping-particle” name-parts. affixes surround the “given” name-part, enclosing any demoted name particles
-            for inverted names.*/
-            case 'given':
-                return $this->addAffixes($this->format($this->applyTextCase($data->given)));
-
-            /* if name set to “family”, formatting and text-case attributes affect the “family” and
-            “non-dropping-particle” name-parts. affixes surround the “family” name-part, enclosing any preceding name
-            particles, as well as the “suffix” name-part for non-inverted names.*/
-            case 'family':
-                return $this->addAffixes($this->format($this->applyTextCase($data->family)));
-        }
-        throw new CiteProcException("This shouldn't happen.");
+        return $this->stylesRenderer->renderAffixes(
+            $this->stylesRenderer->renderFormatting(
+                $this->stylesRenderer->renderTextCase($data->{$this->name})
+            )
+        );
     }
 
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
