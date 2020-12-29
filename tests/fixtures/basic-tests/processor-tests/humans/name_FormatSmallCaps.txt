@@ -5,7 +5,7 @@ bibliography
 
 >>===== RESULT =====>>
 <div class="csl-bib-body">
-  <div class="csl-entry"><span style="font-variant: small-caps;">Hotho, Andreas</span> ; <span style="font-variant: small-caps;">Benz, Dominik</span> ; <span style="font-variant: small-caps;">Eisterlehner, Folke</span> ; <span style="font-variant: small-caps;">Jäschke, Robert</span></div>
+  <div class="csl-entry"><span style="font-variant: small-caps">Hotho, Andreas</span> ; <span style="font-variant: small-caps">Benz, Dominik</span> ; <span style="font-variant: small-caps">Eisterlehner, Folke</span> ; <span style="font-variant: small-caps">Jäschke, Robert</span></div>
 </div>
 <<===== RESULT =====<<
 

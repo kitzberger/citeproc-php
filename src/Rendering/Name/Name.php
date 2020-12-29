@@ -16,9 +16,7 @@ use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Style\Options\NameOptions;
 use Seboettg\CiteProc\Style\Options\SubsequentAuthorSubstituteRule;
-use Seboettg\CiteProc\Styles\AffixesTrait;
-use Seboettg\CiteProc\Styles\DelimiterTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Util\CiteProcHelper;
 use Seboettg\CiteProc\Util\Factory;
 use Seboettg\CiteProc\Util\NameHelper;
@@ -38,31 +36,17 @@ use stdClass;
  */
 class Name implements HasParent
 {
-    use FormattingTrait,
-        AffixesTrait,
-        DelimiterTrait;
-
-    /**
-     * @var array
-     */
+    /** @var NamePart[] */
     protected $nameParts;
 
     /**
      * Specifies the text string used to separate names in a name variable. Default is ”, ” (e.g. “Doe, Smith”).
-     *
-     * @var
+     * @var string
      */
-    private $delimiter = ", ";
+    private $delimiter;
 
-    /**
-     * @var Names
-     */
+    /** @var Names */
     private $parent;
-
-    /**
-     * @var SimpleXMLElement
-     */
-    private $node;
 
     /**
      * @var string
@@ -86,52 +70,64 @@ class Name implements HasParent
     /** @var NameOrderRenderer */
     private $nameOrderRenderer;
 
+    /** @var StylesRenderer */
+    private $stylesRenderer;
+
     /**
-     * Name constructor.
-     *
-     * @param  SimpleXMLElement $node
-     * @param  Names            $parent
+     * @param SimpleXMLElement $node
+     * @param Names $parent
+     * @return Name
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, Names $parent)
+    public static function factory(SimpleXMLElement $node, Names $parent): Name
     {
-        $this->node = $node;
-        $this->parent = $parent;
-
-        $this->nameParts = [];
+        $nameOptionsArray[RenderingMode::CITATION] =
+            NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::CITATION()));
+        $nameOptionsArray[RenderingMode::BIBLIOGRAPHY] =
+            NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::BIBLIOGRAPHY()));
+        $stylesRenderer = StylesRenderer::factory($node);
+        $delimiter = (string) ($node->attributes()['delimiter'] ?? ', ');
+        $name = new Name($stylesRenderer, $nameOptionsArray, $delimiter, $parent);
+        $nameParts = [];
 
         foreach ($node->children() as $child) {
             switch ($child->getName()) {
                 case "name-part":
                     /** @var NamePart $namePart */
-                    $namePart = Factory::create($child, $this);
-                    $this->nameParts[$namePart->getName()] = $namePart;
+                    $namePart = Factory::create($child, $name);
+                    $nameParts[$namePart->getName()] = $namePart;
             }
         }
-
-        $this->nameOptionsArray[RenderingMode::CITATION] =
-            NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::CITATION()));
-        $this->nameOptionsArray[RenderingMode::BIBLIOGRAPHY] =
-            NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::BIBLIOGRAPHY()));
-
-        $this->initFormattingAttributes($node);
-        $this->initAffixesAttributes($node);
-        $this->initDelimiterAttributes($node);
-        $this->nameOrderRenderer = new NameOrderRenderer(
+        $nameOrderRenderer = new NameOrderRenderer(
             CiteProc::getContext()->getGlobalOptions(),
-            $this->nameParts,
-            $this->delimiter
+            $nameParts,
+            $delimiter
         );
+        $name->setNameParts($nameParts);
+        $name->setNameOrderRenderer($nameOrderRenderer);
+        return $name;
+    }
+
+    public function __construct(
+        StylesRenderer $stylesRenderer,
+        array $nameOptionsArray,
+        string $delimiter,
+        Names $parent
+    ) {
+        $this->stylesRenderer = $stylesRenderer;
+        $this->nameOptionsArray = $nameOptionsArray;
+        $this->delimiter = $delimiter;
+        $this->parent = $parent;
     }
 
     /**
-     * @param  stdClass     $data
-     * @param  string       $var
-     * @param  integer|null $citationNumber
+     * @param stdClass $data
+     * @param string $var
+     * @param int|null $citationNumber
      * @return string
      * @throws CiteProcException
      */
-    public function render($data, $var, $citationNumber = null)
+    public function render(stdClass $data, string $var, ?int $citationNumber = null)
     {
         $this->nameOptions = $this->nameOptionsArray[(string)CiteProc::getContext()->getMode()];
         $this->nameOrderRenderer->setNameOptions($this->nameOptions);
@@ -184,12 +180,12 @@ class Name implements HasParent
     }
 
     /**
-     * @param  stdClass $nameItem
-     * @param  int      $rank
+     * @param stdClass $nameItem
+     * @param int $rank
      * @return string
      * @throws CiteProcException
      */
-    private function formatName($nameItem, $rank)
+    private function formatName(stdClass $nameItem, int $rank): string
     {
         $nameObj = $this->cloneNamePOSC($nameItem);
 
@@ -208,12 +204,12 @@ class Name implements HasParent
     }
 
     /**
-     * @param  stdClass $name
-     * @param  int      $rank
+     * @param stdClass $name
+     * @param int $rank
      * @return string
      * @throws CiteProcException
      */
-    private function getNamesString($name, $rank)
+    private function getNamesString(stdClass $name, int $rank): string
     {
         $text = "";
 
@@ -230,14 +226,14 @@ class Name implements HasParent
             return preg_replace("/&nbsp;+/", " ", $text);
         }
         $text = html_entity_decode(preg_replace("/[\s]+/", " ", $text));
-        return $this->format(trim($text));
+        return $this->stylesRenderer->renderFormatting(trim($text));
     }
 
     /**
-     * @param  stdClass $name
+     * @param stdClass $name
      * @return stdClass
      */
-    private function cloneNamePOSC($name)
+    private function cloneNamePOSC(stdClass $name): stdClass
     {
         $nameObj = new stdClass();
         if (isset($name->family)) {
@@ -259,12 +255,12 @@ class Name implements HasParent
     }
 
     /**
-     * @param  $data
-     * @param  $text
-     * @param  $resultNames
+     * @param array $data
+     * @param string $text
+     * @param array $resultNames
      * @return string
      */
-    protected function appendEtAl($data, $text, $resultNames)
+    protected function appendEtAl(array $data, string $text, array $resultNames): string
     {
         //append et al abbreviation
         if (count($data) > 1
@@ -299,10 +295,10 @@ class Name implements HasParent
     }
 
     /**
-     * @param  $resultNames
+     * @param array $resultNames
      * @return array
      */
-    protected function prepareAbbreviation($resultNames)
+    protected function prepareAbbreviation(array $resultNames): array
     {
         $cnt = count($resultNames);
         /* Use of et-al-min and et-al-user-first enables et-al abbreviation. If the number of names in a name variable
@@ -345,12 +341,12 @@ class Name implements HasParent
     }
 
     /**
-     * @param  $data
-     * @param  stdClass $preceding
+     * @param $data
+     * @param stdClass $preceding
      * @return array
      * @throws CiteProcException
      */
-    protected function renderSubsequentSubstitution($data, $preceding)
+    protected function renderSubsequentSubstitution($data, stdClass $preceding): array
     {
         $resultNames = [];
         $subsequentSubstitution = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstitute();
@@ -412,12 +408,12 @@ class Name implements HasParent
     }
 
     /**
-     * @param  array $data
-     * @param  int   $citationNumber
+     * @param array $data
+     * @param int|null $citationNumber
      * @return array
      * @throws CiteProcException
      */
-    private function handleSubsequentAuthorSubstitution($data, $citationNumber)
+    private function handleSubsequentAuthorSubstitution(array $data, ?int $citationNumber): array
     {
         $hasPreceding = CiteProc::getContext()->getCitationData()->hasKey($citationNumber - 1);
         $subsequentSubstitution = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstitute();
@@ -449,11 +445,11 @@ class Name implements HasParent
 
 
     /**
-     * @param  array $data
+     * @param array $data
      * @return array
      * @throws CiteProcException
      */
-    protected function getFormattedNames($data)
+    protected function getFormattedNames(array $data): array
     {
         $resultNames = [];
         foreach ($data as $rank => $name) {
@@ -467,7 +463,7 @@ class Name implements HasParent
      * @param  $resultNames
      * @return string
      */
-    protected function renderDelimiterPrecedesLastNever($resultNames)
+    protected function renderDelimiterPrecedesLastNever($resultNames): string
     {
         $text = "";
         if (!$this->nameOptions->isEtAlUseLast()) {
@@ -487,7 +483,7 @@ class Name implements HasParent
      * @param  $resultNames
      * @return string
      */
-    protected function renderDelimiterPrecedesLastContextual($resultNames)
+    protected function renderDelimiterPrecedesLastContextual($resultNames): string
     {
         if (count($resultNames) === 1) {
             $text = $resultNames[0];
@@ -541,7 +537,7 @@ class Name implements HasParent
     /**
      * @return string
      */
-    public function getForm()
+    public function getForm(): string
     {
         return $this->nameOptions->getForm();
     }
@@ -557,7 +553,7 @@ class Name implements HasParent
     /**
      * @return Names
      */
-    public function getParent()
+    public function getParent(): Names
     {
         return $this->parent;
     }
@@ -565,5 +561,21 @@ class Name implements HasParent
     public function setParent($parent)
     {
         $this->parent = $parent;
+    }
+
+    /**
+     * @param NamePart[] $nameParts
+     */
+    public function setNameParts(array $nameParts): void
+    {
+        $this->nameParts = $nameParts;
+    }
+
+    /**
+     * @param NameOrderRenderer $nameOrderRenderer
+     */
+    public function setNameOrderRenderer(NameOrderRenderer $nameOrderRenderer): void
+    {
+        $this->nameOrderRenderer = $nameOrderRenderer;
     }
 }
