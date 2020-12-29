@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -18,40 +19,51 @@ use SimpleXMLElement;
  */
 class GlobalOptions
 {
-    /**
-     * @var bool
-     */
-    private $initializeWithHyphen = true;
+    /** @var bool */
+    private $initializeWithHyphen;
 
-    /**
-     * @var PageRangeFormats
-     */
-    private $pageRangeFormat;
+    /** @var PageRangeFormats */
+    private $pageRangeFormats;
 
-    /**
-     * @var DemoteNonDroppingParticle
-     */
-    private $demoteNonDroppingParticles;
+    /** @var DemoteNonDroppingParticle */
+    private $demoteNonDroppingParticle;
 
-    /**
-     * GlobalOptions constructor.
-     * @param SimpleXMLElement $node
-     */
-    public function __construct(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): GlobalOptions
     {
+        $initializeWithHyphen = true;
+        $pageRangeFormats = null;
+        $demoteNonDroppingParticle = null;
+
         /** @var SimpleXMLElement $attribute */
         foreach ($node->attributes() as $attribute) {
             switch ($attribute->getName()) {
                 case 'initialize-with-hyphen':
-                    $this->initializeWithHyphen = "false" === (string) $attribute ? false : true;
+                    $initializeWithHyphen = "false" === (string) $attribute ? false : true;
                     break;
                 case 'page-range-format':
-                    $this->pageRangeFormat = new PageRangeFormats((string) $attribute);
+                    $pageRangeFormats = new PageRangeFormats((string) $attribute);
                     break;
                 case 'demote-non-dropping-particle':
-                    $this->demoteNonDroppingParticles = new DemoteNonDroppingParticle((string) $attribute);
+                    $demoteNonDroppingParticle = new DemoteNonDroppingParticle((string) $attribute);
             }
         }
+        return new GlobalOptions($initializeWithHyphen, $pageRangeFormats, $demoteNonDroppingParticle);
+    }
+
+    /**
+     * GlobalOptions constructor.
+     * @param bool $initializeWithHyphen
+     * @param ?PageRangeFormats $pageRangeFormats
+     * @param ?DemoteNonDroppingParticle $demoteNonDroppingParticle
+     */
+    public function __construct(
+        bool $initializeWithHyphen,
+        ?PageRangeFormats $pageRangeFormats,
+        ?DemoteNonDroppingParticle $demoteNonDroppingParticle
+    ) {
+        $this->initializeWithHyphen = $initializeWithHyphen;
+        $this->pageRangeFormats = $pageRangeFormats;
+        $this->demoteNonDroppingParticle = $demoteNonDroppingParticle;
     }
 
     /**
@@ -59,7 +71,7 @@ class GlobalOptions
      * “true”, default) or without (“J.L.”, value “false”).
      * @return bool
      */
-    public function isInitializeWithHyphen()
+    public function isInitializeWithHyphen(): bool
     {
         return $this->initializeWithHyphen;
     }
@@ -71,17 +83,17 @@ class GlobalOptions
      * not set, page ranges are rendered without reformatting.
      * @return PageRangeFormats
      */
-    public function getPageRangeFormat()
+    public function getPageRangeFormats(): ?PageRangeFormats
     {
-        return $this->pageRangeFormat;
+        return $this->pageRangeFormats;
     }
 
     /**
      * Sets the display and sorting behavior of the non-dropping-particle in inverted names (e.g. “Koning, W. de”).
      * @return DemoteNonDroppingParticle
      */
-    public function getDemoteNonDroppingParticles()
+    public function getDemoteNonDroppingParticle(): ?DemoteNonDroppingParticle
     {
-        return $this->demoteNonDroppingParticles;
+        return $this->demoteNonDroppingParticle;
     }
 }

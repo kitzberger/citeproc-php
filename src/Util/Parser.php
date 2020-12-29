@@ -34,7 +34,7 @@ class Parser
     {
         $root = Root::factory($styleSheet);
         CiteProc::getContext()->setRoot($root);
-        $globalOptions = new GlobalOptions($styleSheet);
+        $globalOptions = GlobalOptions::factory($styleSheet);
         CiteProc::getContext()->setGlobalOptions($globalOptions);
 
         foreach ($styleSheet as $node) {
@@ -56,13 +56,13 @@ class Parser
             $name = $node->getName();
             switch ($name) {
                 case 'info':
-                    CiteProc::getContext()->setInfo(new Info($node));
+                    CiteProc::getContext()->setInfo(Info::factory($node));
                     break;
                 case 'locale':
                     CiteProc::getContext()->getLocale()->addXml($node);
                     break;
                 case 'macro':
-                    $macro = new Macro($node, $root);
+                    $macro = Macro::factory($node, $root);
                     CiteProc::getContext()->addMacro($macro->getName(), $macro);
                     break;
             }
@@ -75,6 +75,6 @@ class Parser
      */
     public function parseLocale(Config\Locale $locale)
     {
-        CiteProc::getContext()->setLocale(new Locale($locale)); //parse locale
+        CiteProc::getContext()->setLocale(Locale::factory($locale)); //parse locale
     }
 }

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -15,15 +16,9 @@ use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 
-/**
- * Class Choose
- *
- * @package Seboettg\CiteProc\Node
- *
- * @author Sebastian Böttger <seboettg@gmail.com>
- */
 class Choose implements Rendering, HasParent
 {
 
@@ -35,40 +30,46 @@ class Choose implements Rendering, HasParent
     private $parent;
 
     /**
-     * Choose constructor.
-     *
-     * @param  SimpleXMLElement $node
-     * @param  $parent
+     * @param SimpleXMLElement $node
+     * @param null $parent
+     * @return Choose
      * @throws ClassNotFoundException
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, $parent = null)
+    public static function factory(SimpleXMLElement $node, $parent = null): Choose
     {
-        $this->parent = $parent;
-        $this->children = new ArrayList();
+        $choose = new Choose($parent);
+        $children = new ArrayList();
         $elseIf = [];
         foreach ($node->children() as $child) {
             switch ($child->getName()) {
                 case 'if':
-                    $this->children->add("if", new ChooseIf($child, $this));
+                    $children->add("if", ChooseIf::factory($child, $choose));
                     break;
                 case 'else-if':
-                    $elseIf[] = new ChooseElseIf($child, $this);
+                    $elseIf[] = ChooseElseIf::factory($child, $choose);
                     break;
                 case 'else':
-                    $this->children->add("else", new ChooseElse($child, $this));
+                    $children->add("else", ChooseElse::factory($child, $choose));
                     break;
             }
         }
         if (!empty($elseIf)) {
-            $this->children->add("elseif", $elseIf);
+            $children->add("elseif", $elseIf);
         }
+        $choose->setChildren($children);
+        return $choose;
+    }
+
+    public function __construct($parent)
+    {
+        $this->parent = $parent;
     }
 
     /**
      * @param  array|DataList $data
      * @param  null|int       $citationNumber
-     * @return string
+     * @return mixed
      */
     public function render($data, $citationNumber = null)
     {
@@ -110,5 +111,10 @@ class Choose implements Rendering, HasParent
     public function setParent($parent)
     {
         $this->parent = $parent;
+    }
+
+    private function setChildren(ArrayListInterface $children)
+    {
+        $this->children = $children;
     }
 }

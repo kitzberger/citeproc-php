@@ -37,6 +37,6 @@ class LocaleTest extends TestCase
      */
     protected function setUp()
     {
-        $this->object = new Locale(Config\Locale::DE_DE());
+        $this->object = Locale::factory(Config\Locale::DE_DE());
     }
 }

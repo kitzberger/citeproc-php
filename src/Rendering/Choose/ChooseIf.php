@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -18,13 +19,12 @@ use Seboettg\CiteProc\Rendering\Group;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 
 /**
  * Class ChooseIf
  * @package Seboettg\CiteProc\Node\Choose
- *
- * @author Sebastian Böttger <seboettg@gmail.com>
  */
 class ChooseIf implements Rendering, HasParent
 {
@@ -47,36 +47,48 @@ class ChooseIf implements Rendering, HasParent
      * @var
      */
     protected $parent;
+
     /**
-     * @param SimpleXMLElement $node
+     * @param SimpleXMLElement|null $node
      * @param Choose $parent
-     * @throws InvalidStylesheetException
+     * @return ChooseIf|ChooseElse|ChooseElseIf
      * @throws ClassNotFoundException
+     * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public static function factory(?SimpleXMLElement $node, Choose $parent): ChooseIf
     {
-        $this->parent = $parent;
-        $this->constraints = new ArrayList();
-        $this->children = new ArrayList();
-        $this->match = (string) $node['match'];
-        if (empty($this->match)) {
-            $this->match = Constraint::MATCH_ALL;
+        $constraints = new ArrayList();
+        $children = new ArrayList();
+        $match = (string) $node['match'];
+        if (empty($match)) {
+            $match = Constraint::MATCH_ALL;
         }
         foreach ($node->attributes() as $name => $value) {
             if ('match' !== $name) {
-                $this->constraints->append(Factory::createConstraint((string) $name, (string) $value, $this->match));
+                $constraints->append(Factory::createConstraint((string) $name, (string) $value, $match));
             }
         }
+        $chooseIf = new self($constraints, $children, $match, $parent);
         foreach ($node->children() as $child) {
-            $this->children->append(Factory::create($child, $this));
+            $children->append(Factory::create($child, $chooseIf));
         }
+        return $chooseIf;
     }
+
+    public function __construct(ArrayListInterface $constraints, ArrayListInterface $children, string $match, $parent)
+    {
+        $this->constraints = $constraints;
+        $this->children = $children;
+        $this->match = $match;
+        $this->parent = $parent;
+    }
+
     /**
      * @param array|DataList $data
      * @param null|int $citationNumber
      * @return string
      */
-    public function render($data, $citationNumber = null)
+    public function render($data, $citationNumber = null): string
     {
         $ret = [];
         /** @var Rendering $child */
@@ -95,7 +107,7 @@ class ChooseIf implements Rendering, HasParent
      * @param null|int $citationNumber
      * @return bool
      */
-    public function match($data, $citationNumber = null)
+    public function match($data, $citationNumber = null): bool
     {
         if ($this->constraints->count() === 1) {
             return $this->constraints->current()->validate($data);
@@ -103,7 +115,7 @@ class ChooseIf implements Rendering, HasParent
         $result = true;
         /** @var Constraint $constraint */
         foreach ($this->constraints as $constraint) {
-            if ($this->match === "any") {
+            if ($this->match === Constraint::MATCH_ANY) {
                 if ($constraint->validate($data, $citationNumber)) {
                     return true;
                 }
@@ -111,9 +123,9 @@ class ChooseIf implements Rendering, HasParent
                 $result &= $constraint->validate($data, $citationNumber);
             }
         }
-        if ($this->constraints->count() > 1 && $this->match === "all") {
+        if ($this->constraints->count() > 1 && $this->match === Constraint::MATCH_ALL) {
             return (bool) $result;
-        } elseif ($this->match === "none") {
+        } elseif ($this->match === Constraint::MATCH_NONE) {
             return !((bool) $result);
         }
         return false;
@@ -124,7 +136,7 @@ class ChooseIf implements Rendering, HasParent
      * @noinspection PhpUnused
      * @return Choose
      */
-    public function getParent()
+    public function getParent(): Choose
     {
         return $this->parent;
     }

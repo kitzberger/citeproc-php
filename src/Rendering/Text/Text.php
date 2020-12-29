@@ -192,11 +192,11 @@ class Text implements HasParent, Rendering, RenderingObserver
             $ranges = preg_split("/[-–]/", trim($page));
             if (count($ranges) > 1) {
                 if (!empty($this->globalOptions)
-                    && !empty($this->globalOptions->getPageRangeFormat())
+                    && !empty($this->globalOptions->getPageRangeFormats())
                 ) {
                     return PageHelper::processPageRangeFormats(
                         $ranges,
-                        $this->globalOptions->getPageRangeFormat()
+                        $this->globalOptions->getPageRangeFormats()
                     );
                 }
                 list($from, $to) = $ranges;

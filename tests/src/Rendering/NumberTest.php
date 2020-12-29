@@ -30,7 +30,7 @@ class NumberTest extends TestCase
     {
         parent::setUp();
         $context = new Context();
-        $context->setLocale(new Locale(Config\Locale::EN_GB()));
+        $context->setLocale(Locale::factory(Config\Locale::EN_GB()));
         CiteProc::setContext($context);
     }
 

@@ -57,7 +57,7 @@ class NameOrderRenderer
     {
         $nameAsSortOrder = (($this->nameOptions->getNameAsSortOrder() === "first" && $rank === 0) ||
             $this->nameOptions->getNameAsSortOrder() === "all");
-        $demoteNonDroppingParticle = $this->globalOptions->getDemoteNonDroppingParticles();
+        $demoteNonDroppingParticle = $this->globalOptions->getDemoteNonDroppingParticle();
         $normalizedName = NameHelper::normalizeName($data);
         $delimiter = $this->nameOptions->getNameDelimiter() ?? $this->delimiter;
         if (StringHelper::isLatinString($normalizedName) || StringHelper::isCyrillicString($normalizedName)) {

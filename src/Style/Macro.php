@@ -16,7 +16,8 @@ use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
 use Seboettg\CiteProc\Util\Factory;
-use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList as ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 
 /**
@@ -52,25 +53,28 @@ class Macro implements Rendering, HasParent
      * @var Root
      */
     private $parent;
+
+    public static function factory(SimpleXMLElement $node, $parent): Macro
+    {
+        $name = (string) $node->attributes()['name'];
+        $children = new ArrayList();
+        foreach ($node->children() as $child) {
+            $children->append(Factory::create($child, $parent));
+        }
+        return new Macro($children, $parent, $name);
+    }
+
     /**
      * Macro constructor.
-     * @param SimpleXMLElement $node
-     * @param Root $parent
-     * @throws CiteProcException
+     * @param ArrayListInterface $children
+     * @param mixed $parent
+     * @param $name
      */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public function __construct(ArrayListInterface $children, $parent, $name)
     {
+        $this->children = $children;
         $this->parent = $parent;
-        $attr = $node->attributes();
-        if (!isset($attr['name'])) {
-            throw new CiteProcException("Attribute \"name\" needed.");
-        }
-        $this->name = (string) $attr['name'];
-
-        $this->children = new ArrayList();
-        foreach ($node->children() as $child) {
-            $this->children->append(Factory::create($child, $this));
-        }
+        $this->name = $name;
     }
 
     /**

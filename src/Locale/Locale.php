@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -10,9 +11,10 @@
 namespace Seboettg\CiteProc\Locale;
 
 use InvalidArgumentException;
-use Seboettg\Citeproc\Config;
+use Seboettg\CiteProc\Config\Locale as LocaleConfig;
 use Seboettg\CiteProc\Exception\CiteProcException;
-use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList as ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 use stdClass;
 use function Seboettg\CiteProc\loadLocales;
@@ -33,47 +35,114 @@ use function Seboettg\CiteProc\loadLocales;
  */
 class Locale
 {
-    use LocaleXmlParserTrait;
-
-    /**
-     * @var SimpleXMLElement
-     */
+    /** @var SimpleXMLElement */
     private $localeXml;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $language;
+
+    /** @var ArrayListInterface */
+    private $options;
+
+    /** @var ArrayListInterface */
+    private $date;
+
+    /** @var ArrayListInterface */
+    private $terms;
+
+    /** @var ArrayListInterface */
+    private $optionsXml;
+
+    /** @var ArrayListInterface */
+    private $dateXml;
+
+    /** @var ArrayListInterface */
+    private $termsXml;
+
+    /** @var LocaleParser */
+    private $localeParser;
+
+    /**
+     * @param LocaleConfig $localeConfig
+     * @param null $xmlString
+     * @return Locale
+     * @throws CiteProcException
+     */
+    public static function factory(LocaleConfig $localeConfig, $xmlString = null): Locale
+    {
+        $language = (string)$localeConfig;
+        if (!empty($xmlString)) {
+            $localeXml = new SimpleXMLElement($xmlString);
+        } else {
+            $localeXml = new SimpleXMLElement(loadLocales((string)$localeConfig));
+        }
+        $localeParser = new LocaleParser();
+        list($options, $optionsXml, $date, $dateXml, $terms, $termsXml) = $localeParser->parse($localeXml);
+        return new Locale(
+            $localeParser,
+            $localeXml,
+            $language,
+            $options,
+            $optionsXml,
+            $date,
+            $dateXml,
+            $terms,
+            $termsXml
+        );
+    }
 
     /**
      * Locale constructor.
-     * @param Config\Locale $localeConfig
-     * @param ?string $xmlString
-     * @throws CiteProcException
+     * @param LocaleParser $localeParser
+     * @param SimpleXMLElement $localeXml
+     * @param string $language
+     * @param ArrayListInterface $options
+     * @param ArrayListInterface $optionsXml
+     * @param ArrayListInterface $date
+     * @param ArrayListInterface $dateXml
+     * @param ArrayListInterface $terms
+     * @param ArrayListInterface $termsXml
      */
-    public function __construct(Config\Locale $localeConfig, $xmlString = null)
-    {
-        $this->language = (string)$localeConfig;
-
-        if (!empty($xmlString)) {
-            $this->localeXml = new SimpleXMLElement($xmlString);
-        } else {
-            $this->localeXml = new SimpleXMLElement(loadLocales((string)$localeConfig));
-        }
-
-        $this->initLocaleXmlParser();
-        $this->parseXml($this->localeXml);
+    public function __construct(
+        LocaleParser $localeParser,
+        SimpleXMLElement $localeXml,
+        string $language,
+        ArrayListInterface $options,
+        ArrayListInterface $optionsXml,
+        ArrayListInterface $date,
+        ArrayListInterface $dateXml,
+        ArrayListInterface $terms,
+        ArrayListInterface $termsXml
+    ) {
+        $this->localeParser = $localeParser;
+        $this->localeXml = $localeXml;
+        $this->language = $language;
+        $this->options = $options;
+        $this->optionsXml = $optionsXml;
+        $this->date = $date;
+        $this->dateXml = $dateXml;
+        $this->terms = $terms;
+        $this->termsXml = $termsXml;
     }
 
     /**
      * @param SimpleXMLElement $xml
      * @return $this
      */
-    public function addXml(SimpleXMLElement $xml)
+    public function addXml(SimpleXMLElement $xml): Locale
     {
         $lang = (string) $xml->attributes('http://www.w3.org/XML/1998/namespace')->{'lang'};
         if (empty($lang) || $this->getLanguage() === $lang || explode('-', $this->getLanguage())[0] === $lang) {
-            $this->parseXml($xml);
+            list($this->options, $this->optionsXml, $this->date, $this->dateXml, $this->terms, $this->termsXml) =
+                $this->localeParser->parse(
+                    $xml,
+                    $this->options,
+                    $this->optionsXml,
+                    $this->date,
+                    $this->dateXml,
+                    $this->terms,
+                    $this->termsXml
+                );
         }
         return $this;
     }
@@ -81,7 +150,7 @@ class Locale
     /**
      * @return string
      */
-    public function getLanguage()
+    public function getLanguage(): string
     {
         return $this->language;
     }
@@ -90,7 +159,7 @@ class Locale
      * @param string $type
      * @param $name
      * @param string $form
-     * @return stdClass
+     * @return stdClass|null|bool
      */
     public function filter(string $type, $name, string $form = "long")
     {
@@ -143,5 +212,13 @@ class Locale
             }
         }
         return $result;
+    }
+
+    /**
+     * @return ArrayListInterface
+     */
+    public function getDateXml(): ?ArrayListInterface
+    {
+        return $this->dateXml;
     }
 }

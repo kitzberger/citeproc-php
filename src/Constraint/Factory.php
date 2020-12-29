@@ -32,9 +32,7 @@ class Factory extends \Seboettg\CiteProc\Util\Factory
     public static function createConstraint(string $name, string $value, string $match)
     {
         $parts = explode("-", $name);
-        $className = implode("", array_map(function ($part) {
-            return ucfirst($part);//overridden function
-        }, $parts));
+        $className = implode("", array_map("ucfirst", $parts));
         $className = self::NAMESPACE_CONSTRAINTS . $className;
 
         if (!class_exists($className)) {

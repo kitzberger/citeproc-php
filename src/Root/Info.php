@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -34,12 +35,12 @@ class Info
      */
     private $links;
 
-    public function __construct(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): Info
     {
-        $this->authors = [];
-        $this->links = [];
-
-        /** @var SimpleXMLElement $child */
+        $authors = [];
+        $links = [];
+        $id = null;
+        $title = null;
         foreach ($node->children() as $child) {
             switch ($child->getName()) {
                 case 'author':
@@ -49,25 +50,33 @@ class Info
                     foreach ($child->children() as $authorNode) {
                         $author->{$authorNode->getName()} = (string) $authorNode;
                     }
-                    $this->authors[] = $author;
+                    $authors[] = $author;
                     break;
                 case 'link':
-                    foreach ($child->attributes() as $attribute) {
-                        if ($attribute->getName() === "value") {
-                            $this->links[] = (string) $attribute;
-                        }
-                    }
+                    $links[] = (string) $child->attributes()['href'];
                     break;
-                default:
-                    $this->{$child->getName()} = (string) $child;
+                case 'id':
+                    $id = (string) $child;
+                    break;
+                case 'title':
+                    $title = (string) $child;
             }
         }
+        return new Info($id, $title, $authors, $links);
+    }
+
+    public function __construct(?string $id, ?string $title, array $authors, array $links)
+    {
+        $this->id = $id;
+        $this->title = $title;
+        $this->authors = $authors;
+        $this->links = $links;
     }
 
     /**
      * @return string
      */
-    public function getTitle()
+    public function getTitle(): ?string
     {
         return $this->title;
     }
@@ -75,7 +84,7 @@ class Info
     /**
      * @return string
      */
-    public function getId()
+    public function getId(): ?string
     {
         return $this->id;
     }
@@ -83,7 +92,7 @@ class Info
     /**
      * @return array
      */
-    public function getAuthors()
+    public function getAuthors(): array
     {
         return $this->authors;
     }
@@ -91,7 +100,7 @@ class Info
     /**
      * @return array
      */
-    public function getLinks()
+    public function getLinks(): array
     {
         return $this->links;
     }

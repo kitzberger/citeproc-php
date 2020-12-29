@@ -42,9 +42,9 @@ class ChooseTest extends TestCase
         $xml = new SimpleXMLElement($this->chooseXml[1]);
         $context = new Context();
         $context->setMode(RenderingMode::BIBLIOGRAPHY());
-        $context->setLocale(new \Seboettg\CiteProc\Locale\Locale(Locale::EN_US()));
+        $context->setLocale(\Seboettg\CiteProc\Locale\Locale::factory(Locale::EN_US()));
         CiteProc::setContext($context);
-        $choose = new Choose($xml, null);
+        $choose = Choose::factory($xml, null);
         $ret1 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität","volume":2}'));
         $ret2 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität","volume":"non-numeric value"}'));
         $ret3 = $choose->render(json_decode('{"title":"Ein herzzerreißendes Werk von umwerfender Genialität"}'));

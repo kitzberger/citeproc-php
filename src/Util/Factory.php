@@ -10,6 +10,7 @@
 namespace Seboettg\CiteProc\Util;
 
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Choose\Choose;
 use Seboettg\CiteProc\Rendering\Date\Date;
 use Seboettg\CiteProc\Rendering\Date\DatePart;
 use Seboettg\CiteProc\Rendering\Group;
@@ -67,7 +68,8 @@ class Factory
         DatePart::class,
         NamePart::class,
         Names::class,
-        Name::class
+        Name::class,
+        Choose::class,
     ];
 
     /**

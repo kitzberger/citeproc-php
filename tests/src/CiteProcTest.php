@@ -102,6 +102,8 @@ class CiteProcTest extends TestCase
         $info = CiteProc::getContext()->getInfo();
         $this->assertEquals("Albi Odendaal", $info->getAuthors()[0]->name);
         $this->assertEquals("North-West University - Harvard", $info->getTitle());
+        $this->assertEquals("http://www.zotero.org/styles/harvard-north-west-university", $info->getId());
+        $this->assertCount(3, $info->getLinks());
     }
 
     /**
