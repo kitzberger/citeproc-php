@@ -20,7 +20,6 @@ use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Style\Options\GlobalOptions;
-use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Terms\Locator;
 use Seboettg\CiteProc\Util\CiteProcHelper;

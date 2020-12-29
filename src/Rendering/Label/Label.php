@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -12,10 +13,11 @@ namespace Seboettg\CiteProc\Rendering\Label;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Locale\TermForm;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
-use stdClass;
 
 /**
  * Class Label
@@ -23,11 +25,13 @@ use stdClass;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Label implements Rendering
+class Label implements Rendering, RenderingObserver
 {
+    use RenderingObserverTrait;
+
     private $variable;
 
-    private $stripPeriods = false;
+    private $stripPeriods;
 
     /** @var TermForm  */
     private $form;
@@ -41,7 +45,7 @@ class Label implements Rendering
     /** @var StylesRenderer */
     private $stylesRenderer;
 
-    public static function factory(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): Label
     {
         $variable = $form = $plural = null;
         $stripPeriods = false;
@@ -64,7 +68,9 @@ class Label implements Rendering
         }
         $locale = $context->getLocale();
         $stylesRenderer = StylesRenderer::factory($node);
-        return new self($variable, $form, $plural, $stylesRenderer, $locale, $stripPeriods);
+        $label = new Label($variable, $form, $plural, $stylesRenderer, $locale, $stripPeriods);
+        $context->addObserver($label);
+        return $label;
     }
 
 
@@ -91,14 +97,15 @@ class Label implements Rendering
         $this->stylesRenderer = $stylesRenderer;
         $this->locale = $locale;
         $this->stripPeriods = $stripPeriods;
+        $this->initObserver();
     }
 
     /**
-     * @param stdClass $data
+     * @param $data
      * @param int|null $citationNumber
      * @return string
      */
-    public function render($data, $citationNumber = null)
+    public function render($data, $citationNumber = null): string
     {
         $lang = (isset($data->language) && $data->language != 'en') ? $data->language : 'en';
         $this->stylesRenderer->getTextCase()->setLanguage($lang);
@@ -110,17 +117,20 @@ class Label implements Rendering
         if ($this->variable === "editortranslator") {
             if (isset($data->editor) && isset($data->translator)) {
                 $plural = $this->getPlural($data, $plural, "editortranslator");
-                $term = CiteProc::getContext()->getLocale()->filter('terms', "editortranslator", $form);
+                $term = $this->locale->filter('terms', "editortranslator", (string)$form);
                 $pluralForm = $term->{$plural};
                 if (!empty($pluralForm)) {
                     $text = $pluralForm;
                 }
             }
         } elseif ($this->variable === "locator") {
-            $citationItem = CiteProc::getContext()->getCitationItemById($data->id);
+            $id = $data->id;
+            $citationItem = $this->citationItems->filter(function ($item) use ($id) {
+                return $item->id === $id;
+            })->current();
             if (!empty($citationItem->label)) {
                 $plural = $this->evaluateStringPluralism($citationItem->locator, $citationItem->label);
-                $term = CiteProc::getContext()->getLocale()->filter('terms', $citationItem->label, $form);
+                $term = $this->locale->filter('terms', $citationItem->label, (string)$form);
                 $pluralForm = $term->{$plural} ?? "";
                 if (!empty($citationItem->locator) && !empty($pluralForm)) {
                     $text = $pluralForm;
@@ -130,7 +140,7 @@ class Label implements Rendering
             foreach ($variables as $variable) {
                 if (isset($data->{$variable})) {
                     $plural = $this->getPlural($data, $plural, $variable);
-                    $term = $this->locale->filter('terms', $variable, $form);
+                    $term = $this->locale->filter('terms', $variable, (string)$form);
                     $pluralForm = $term->{$plural} ?? "";
                     if (!empty($data->{$variable}) && !empty($pluralForm)) {
                         $text = $pluralForm;
@@ -148,7 +158,7 @@ class Label implements Rendering
      * @param string $variable
      * @return string
      */
-    private function evaluateStringPluralism(string $str, string $variable)
+    private function evaluateStringPluralism(string $str, string $variable): string
     {
         $plural = 'single';
         if (!empty($str)) {
@@ -187,7 +197,7 @@ class Label implements Rendering
      * @param $variable
      * @return string
      */
-    protected function getPlural($data, $plural, $variable)
+    protected function getPlural($data, $plural, $variable): string
     {
 
         if ($variable === "editortranslator" && isset($data->editor)) {
@@ -227,14 +237,6 @@ class Label implements Rendering
     }
 
     /**
-     * @param TermForm $form
-     */
-    public function setForm(TermForm $form)
-    {
-        $this->form = $form;
-    }
-
-    /**
      * @param $text
      * @return string
      */
@@ -243,9 +245,9 @@ class Label implements Rendering
         if (empty($text)) {
             return "";
         }
-        if ($this->stripPeriods) {
-            //$text = str_replace('.', '', $text);
-        }
+        //if ($this->stripPeriods) {
+        //    $text = str_replace('.', '', $text);
+        //}
 
         $text = preg_replace("/\s&\s/", " &#38; ", $text); //replace ampersands by html entity
         $text = $this->stylesRenderer->renderTextCase($text);
@@ -256,7 +258,7 @@ class Label implements Rendering
     /**
      * @return string
      */
-    protected function defaultPlural()
+    protected function defaultPlural(): string
     {
         $plural = "";
         switch ($this->plural) {
