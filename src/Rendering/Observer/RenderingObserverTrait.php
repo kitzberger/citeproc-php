@@ -13,6 +13,7 @@ namespace Seboettg\CiteProc\Rendering\Observer;
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Context;
+use Seboettg\CiteProc\Data\DataList;
 use Seboettg\Collection\ArrayList;
 use Seboettg\Collection\ArrayList\ArrayListInterface;
 
@@ -27,6 +28,9 @@ trait RenderingObserverTrait
     /** @var RenderingState */
     private $state;
 
+    /** @var DataList */
+    private $citationData;
+
     /** @var Context */
     private $context;
 
@@ -35,6 +39,7 @@ trait RenderingObserverTrait
         $this->mode = RenderingMode::BIBLIOGRAPHY();
         $this->state = RenderingState::RENDERING();
         $this->citationItems = new ArrayList();
+        $this->citationData = new DataList();
     }
 
     public function notify(RenderingEvent $event): void
@@ -47,6 +52,9 @@ trait RenderingObserverTrait
         }
         if ($event instanceof StateChangedEvent) {
             $this->state = $event->getRenderingState();
+        }
+        if ($event instanceof CitationDataChangedEvent) {
+            $this->citationData = $event->getCitationData();
         }
     }
 

@@ -9,7 +9,6 @@
 
 namespace Seboettg\CiteProc\Data;
 
-use Seboettg\CiteProc\Style\Citation;
 use Seboettg\CiteProc\Style\Options\SubsequentAuthorSubstituteRule;
 use Seboettg\Collection\ArrayList;
 
@@ -32,9 +31,9 @@ class DataList extends ArrayList
     private $subsequentAuthorSubstituteRule = "complete-all";
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getSubsequentAuthorSubstitute()
+    public function getSubsequentAuthorSubstitute(): ?string
     {
         return $this->subsequentAuthorSubstitute;
     }
@@ -42,7 +41,7 @@ class DataList extends ArrayList
     /**
      * @param string $subsequentAuthorSubstitute
      */
-    public function setSubsequentAuthorSubstitute($subsequentAuthorSubstitute)
+    public function setSubsequentAuthorSubstitute(string $subsequentAuthorSubstitute)
     {
         $this->subsequentAuthorSubstitute = $subsequentAuthorSubstitute;
     }

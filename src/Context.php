@@ -13,8 +13,6 @@ use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Locale\Locale;
-use Seboettg\CiteProc\Rendering\Name\Name;
-use Seboettg\CiteProc\Rendering\Name\Names;
 use Seboettg\CiteProc\Rendering\Observer\CitationDataChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\CitationItemsChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\CitedItemsChanged;
@@ -312,7 +310,7 @@ class Context implements RenderingObservable
         $this->notifyObservers(new CitationItemsChangedEvent($citationItems));
     }
 
-    public function hasCitationItems()
+    public function hasCitationItems(): bool
     {
         return ($this->citationData->count() > 0);
     }

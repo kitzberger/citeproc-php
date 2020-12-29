@@ -13,7 +13,10 @@ use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Rendering\HasParent;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Style\Options\NameOptions;
 use Seboettg\CiteProc\Style\Options\SubsequentAuthorSubstituteRule;
 use Seboettg\CiteProc\Styles\StylesRenderer;
@@ -34,8 +37,10 @@ use stdClass;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Name implements HasParent
+class Name implements HasParent, RenderingObserver
 {
+    use RenderingObserverTrait;
+
     /** @var NamePart[] */
     protected $nameParts;
 
@@ -73,6 +78,9 @@ class Name implements HasParent
     /** @var StylesRenderer */
     private $stylesRenderer;
 
+    /** @var Locale */
+    private $locale;
+
     /**
      * @param SimpleXMLElement $node
      * @param Names $parent
@@ -81,13 +89,14 @@ class Name implements HasParent
      */
     public static function factory(SimpleXMLElement $node, Names $parent): Name
     {
+        $context = CiteProc::getContext();
         $nameOptionsArray[RenderingMode::CITATION] =
             NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::CITATION()));
         $nameOptionsArray[RenderingMode::BIBLIOGRAPHY] =
             NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::BIBLIOGRAPHY()));
         $stylesRenderer = StylesRenderer::factory($node);
         $delimiter = (string) ($node->attributes()['delimiter'] ?? ', ');
-        $name = new Name($stylesRenderer, $nameOptionsArray, $delimiter, $parent);
+        $name = new Name($stylesRenderer, $context->getLocale(), $nameOptionsArray, $delimiter, $parent);
         $nameParts = [];
 
         foreach ($node->children() as $child) {
@@ -99,25 +108,29 @@ class Name implements HasParent
             }
         }
         $nameOrderRenderer = new NameOrderRenderer(
-            CiteProc::getContext()->getGlobalOptions(),
+            $context->getGlobalOptions(),
             $nameParts,
             $delimiter
         );
         $name->setNameParts($nameParts);
         $name->setNameOrderRenderer($nameOrderRenderer);
+        $context->addObserver($name);
         return $name;
     }
 
     public function __construct(
         StylesRenderer $stylesRenderer,
+        Locale $locale,
         array $nameOptionsArray,
         string $delimiter,
         Names $parent
     ) {
         $this->stylesRenderer = $stylesRenderer;
+        $this->locale = $locale;
         $this->nameOptionsArray = $nameOptionsArray;
         $this->delimiter = $delimiter;
         $this->parent = $parent;
+        $this->initObserver();
     }
 
     /**
@@ -135,7 +148,7 @@ class Name implements HasParent
         $this->variable = $var;
         $name = $data->{$var};
         if ("text" === $this->nameOptions->getAnd()) {
-            $this->and = CiteProc::getContext()->getLocale()->filter('terms', 'and')->single;
+            $this->and = $this->locale->filter('terms', 'and')->single;
         } elseif ('symbol' === $this->nameOptions->getAnd()) {
             $this->and = '&#38;';
         }
@@ -143,7 +156,7 @@ class Name implements HasParent
         $resultNames = $this->handleSubsequentAuthorSubstitution($name, $citationNumber);
 
         if (empty($resultNames)) {
-            return CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstitute();
+            return $this->citationData->getSubsequentAuthorSubstitute();
         }
 
         $resultNames = $this->prepareAbbreviation($resultNames);
@@ -349,8 +362,8 @@ class Name implements HasParent
     protected function renderSubsequentSubstitution($data, stdClass $preceding): array
     {
         $resultNames = [];
-        $subsequentSubstitution = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstitute();
-        $subsequentSubstitutionRule = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstituteRule();
+        $subsequentSubstitution = $this->citationData->getSubsequentAuthorSubstitute();
+        $subsequentSubstitutionRule = $this->citationData->getSubsequentAuthorSubstituteRule();
 
         /**
          * @var string $type
@@ -415,10 +428,10 @@ class Name implements HasParent
      */
     private function handleSubsequentAuthorSubstitution(array $data, ?int $citationNumber): array
     {
-        $hasPreceding = CiteProc::getContext()->getCitationData()->hasKey($citationNumber - 1);
-        $subsequentSubstitution = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstitute();
-        $subsequentSubstitutionRule = CiteProc::getContext()->getCitationData()->getSubsequentAuthorSubstituteRule();
-        $preceding = CiteProc::getContext()->getCitationData()->get($citationNumber - 1);
+        $hasPreceding = $this->citationData->hasKey($citationNumber - 1);
+        $subsequentSubstitution = $this->citationData->getSubsequentAuthorSubstitute();
+        $subsequentSubstitutionRule = $this->citationData->getSubsequentAuthorSubstituteRule();
+        $preceding = $this->citationData->get($citationNumber - 1);
 
         if ($hasPreceding && !is_null($subsequentSubstitution) && !empty($subsequentSubstitutionRule)) {
             /**
