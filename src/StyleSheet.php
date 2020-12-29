@@ -9,7 +9,6 @@
 
 namespace Seboettg\CiteProc;
 
-use Seboettg\CiteProc\Exception\CiteProcException;
 use SimpleXMLElement;
 
 /**

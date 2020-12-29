@@ -146,6 +146,7 @@ class CiteProc implements CiteProcInterface
 
     /**
      * @return string
+     * @throws CiteProcException
      */
     public function renderCssStyles(): string
     {

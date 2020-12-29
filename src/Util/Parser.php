@@ -21,7 +21,6 @@ use Seboettg\CiteProc\Style\Bibliography;
 use Seboettg\CiteProc\Style\Citation;
 use Seboettg\CiteProc\Style\Macro;
 use Seboettg\CiteProc\Style\Options\GlobalOptions;
-use Seboettg\CiteProc\StyleSheet;
 use SimpleXMLElement;
 
 class Parser

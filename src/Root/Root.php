@@ -10,7 +10,6 @@
 namespace Seboettg\CiteProc\Root;
 
 use Seboettg\CiteProc\CiteProc;
-use Seboettg\CiteProc\Style\InheritableNameAttributesTrait;
 use Seboettg\CiteProc\Style\Options\NameOptions;
 
 /**

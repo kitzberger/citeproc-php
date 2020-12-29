@@ -18,7 +18,6 @@ use Seboettg\CiteProc\Style\Options\CitationOptions;
 use Seboettg\CiteProc\Style\Options\NameOptions;
 use Seboettg\CiteProc\Style\Sort\Sort;
 use Seboettg\Collection\ArrayList\ArrayListInterface;
-use Seboettg\Collection\ArrayList as ArrayList;
 use SimpleXMLElement;
 
 /**

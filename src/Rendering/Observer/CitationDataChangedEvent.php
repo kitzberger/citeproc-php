@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace Seboettg\CiteProc\Rendering\Observer;
 
-use Seboettg\CiteProc\Data\DataList;
 use Seboettg\Collection\ArrayList\ArrayListInterface;
 
 class CitationDataChangedEvent implements RenderingEvent

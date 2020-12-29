@@ -10,7 +10,6 @@
 namespace Seboettg\CiteProc\Constraint;
 
 use Seboettg\CiteProc\CiteProc;
-use Seboettg\Collection\ArrayList;
 use stdClass;
 
 /**
