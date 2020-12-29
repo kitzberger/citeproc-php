@@ -10,10 +10,9 @@
 namespace Seboettg\CiteProc\Style;
 
 use Seboettg\CiteProc\Data\DataList;
-use Seboettg\CiteProc\Exception\CiteProcException;
+use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Rendering;
-use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Styles\ConsecutivePunctuationCharacterTrait;
 use Seboettg\CiteProc\Util\Factory;
 use Seboettg\Collection\ArrayList as ArrayList;
@@ -50,10 +49,16 @@ class Macro implements Rendering, HasParent
     private $name;
 
     /**
-     * @var Root
+     * @var mixed
      */
     private $parent;
 
+    /**
+     * @param SimpleXMLElement $node
+     * @param $parent
+     * @return Macro
+     * @throws InvalidStylesheetException
+     */
     public static function factory(SimpleXMLElement $node, $parent): Macro
     {
         $name = (string) $node->attributes()['name'];
@@ -80,7 +85,7 @@ class Macro implements Rendering, HasParent
     /**
      * @param array|DataList $data
      * @param int|null $citationNumber
-     * @return string
+     * @return mixed
      */
     public function render($data, $citationNumber = null)
     {
@@ -103,13 +108,13 @@ class Macro implements Rendering, HasParent
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * @return Root
+     * @return mixed
      */
     public function getParent()
     {
