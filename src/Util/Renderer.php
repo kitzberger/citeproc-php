@@ -26,7 +26,7 @@ class Renderer
      * @return string
      * @throws CiteProcException
      */
-    public function render($data, Config\RenderingMode $mode, $citationItems)
+    public function render($data, Config\RenderingMode $mode, $citationItems = [])
     {
         $res = "";
         if (is_array($data)) {
@@ -34,7 +34,13 @@ class Renderer
         } elseif (!($data instanceof DataList)) {
             throw new CiteProcException('No valid format for variable data. Either DataList or array expected');
         }
-
+        if (is_array($citationItems)) {
+            $citationItems = new ArrayList(...$citationItems);
+        } elseif (!($citationItems instanceof ArrayList)) {
+            throw new CiteProcException('No valid format for variable ' .
+                '`citationItems`, ' .
+                'array or ArrayList expected.');
+        }
         switch ((string)$mode) {
             case Config\RenderingMode::BIBLIOGRAPHY:
                 CiteProc::getContext()->setMode($mode);
@@ -43,13 +49,6 @@ class Renderer
                 $res = $this->bibliography($data);
                 break;
             case Config\RenderingMode::CITATION:
-                if (is_array($citationItems)) {
-                    $citationItems = new ArrayList(...$citationItems);
-                } elseif (!($citationItems instanceof ArrayList)) {
-                    throw new CiteProcException('No valid format for variable ' .
-                        '`citationItems`, ' .
-                        'array or ArrayList expected.');
-                }
                 CiteProc::getContext()->setMode($mode);
                 // set CitationItems to Context
                 CiteProc::getContext()->setCitationItems($citationItems);

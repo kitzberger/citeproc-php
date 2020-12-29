@@ -16,10 +16,14 @@ use SimpleXMLElement;
  * @package Seboettg\CiteProc\Style
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class CitationOptions
+class CitationOptions implements StyleOptions
 {
-    public function __construct(SimpleXMLElement $node)
+    /**
+     * @param SimpleXMLElement $node
+     * @return CitationOptions
+     */
+    public static function factory(SimpleXMLElement $node): CitationOptions
     {
-        //TODO: implement
+        return new self();
     }
 }

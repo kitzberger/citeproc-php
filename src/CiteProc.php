@@ -77,9 +77,9 @@ class CiteProc implements CiteProcInterface
         $this->styleSheet = $styleSheet;
         $this->locale = ($locale ?? Config\Locale::EN_US());
         $this->markupExtension = $markupExtension;
+        self::$context = new Context();
         $this->parser = new Parser();
         $this->renderer = new Renderer();
-        self::$context = new Context();
     }
 
     public function __destruct()

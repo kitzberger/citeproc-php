@@ -16,7 +16,7 @@ use SimpleXMLElement;
  * @package Seboettg\CiteProc\Style
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class BibliographyOptions
+class BibliographyOptions implements StyleOptions
 {
 
     /**
@@ -40,7 +40,7 @@ class BibliographyOptions
      * If set to “true” (“false” is the default), bibliographic entries are rendered with hanging-indents.
      * @var string
      */
-    private $hangingIndent = false;
+    private $hangingIndent;
 
     /**
      * If set, subsequent lines of bibliographic entries are aligned along the second field. With “flush”, the first
@@ -65,129 +65,108 @@ class BibliographyOptions
      */
     private $entrySpacing;
 
-    public function __construct(SimpleXMLElement $node)
+    public static function factory(SimpleXMLElement $node): BibliographyOptions
     {
-
+        $subsequentAuthorSubstitute = $subsequentAuthorSubstituteRule =
+            $secondFieldAlign = $lineSpacing = $entrySpacing = null;
+        $hangingIndent = false;
         /** @var SimpleXMLElement $attribute */
         foreach ($node->attributes() as $attribute) {
             switch ($attribute->getName()) {
                 case 'subsequent-author-substitute':
-                    $this->subsequentAuthorSubstitute = (string) $attribute;
+                    $subsequentAuthorSubstitute = (string) $attribute;
                     break;
                 case 'subsequent-author-substitute-rule':
-                    $this->subsequentAuthorSubstituteRule = new SubsequentAuthorSubstituteRule((string) $attribute);
+                    $subsequentAuthorSubstituteRule = new SubsequentAuthorSubstituteRule((string) $attribute);
                     break;
                 case 'hanging-indent':
-                    $this->hangingIndent = "true" === (string) $attribute;
+                    $hangingIndent = "true" === (string) $attribute;
                     break;
                 case 'second-field-align':
-                    $this->secondFieldAlign = (string) $attribute;
+                    $secondFieldAlign = (string) $attribute;
                     break;
                 case 'line-spacing':
-                    $this->lineSpacing = (string) $attribute;
+                    $lineSpacing = (string) $attribute;
                     break;
                 case 'entry-spacing':
-                    $this->entrySpacing = (string) $attribute;
+                    $entrySpacing = (string) $attribute;
             }
         }
-        if (empty($this->subsequentAuthorSubstituteRule)) {
-            $this->subsequentAuthorSubstituteRule = new SubsequentAuthorSubstituteRule("complete-all");
+        if (empty($subsequentAuthorSubstituteRule)) {
+            $subsequentAuthorSubstituteRule = new SubsequentAuthorSubstituteRule("complete-all");
         }
+
+        return new BibliographyOptions(
+            $subsequentAuthorSubstitute,
+            $subsequentAuthorSubstituteRule,
+            $hangingIndent,
+            $secondFieldAlign,
+            $lineSpacing,
+            $entrySpacing
+        );
+    }
+
+    public function __construct(
+        ?string $subsequentAuthorSubstitute,
+        ?SubsequentAuthorSubstituteRule $subsequentAuthorSubstituteRule,
+        bool $hangingIndent,
+        ?string $secondFieldAlign,
+        ?string $lineSpacing,
+        ?string $entrySpacing
+    ) {
+        $this->subsequentAuthorSubstitute = $subsequentAuthorSubstitute;
+        $this->subsequentAuthorSubstituteRule = $subsequentAuthorSubstituteRule;
+        $this->hangingIndent = $hangingIndent;
+        $this->secondFieldAlign = $secondFieldAlign;
+        $this->lineSpacing = $lineSpacing;
+        $this->entrySpacing = $entrySpacing;
     }
 
     /**
      * @return string
      */
-    public function getSubsequentAuthorSubstitute()
+    public function getSubsequentAuthorSubstitute(): ?string
     {
         return $this->subsequentAuthorSubstitute;
     }
 
     /**
-     * @param string $subsequentAuthorSubstitute
-     */
-    public function setSubsequentAuthorSubstitute($subsequentAuthorSubstitute)
-    {
-        $this->subsequentAuthorSubstitute = $subsequentAuthorSubstitute;
-    }
-
-    /**
      * @return SubsequentAuthorSubstituteRule
      */
-    public function getSubsequentAuthorSubstituteRule()
+    public function getSubsequentAuthorSubstituteRule(): ?SubsequentAuthorSubstituteRule
     {
         return $this->subsequentAuthorSubstituteRule;
     }
 
     /**
-     * @param SubsequentAuthorSubstituteRule $subsequentAuthorSubstituteRule
+     * @return bool
      */
-    public function setSubsequentAuthorSubstituteRule($subsequentAuthorSubstituteRule)
-    {
-        $this->subsequentAuthorSubstituteRule = $subsequentAuthorSubstituteRule;
-    }
-
-    /**
-     * @return string
-     */
-    public function getHangingIndent()
+    public function getHangingIndent(): ?bool
     {
         return $this->hangingIndent;
     }
 
     /**
-     * @param string $hangingIndent
-     */
-    public function setHangingIndent($hangingIndent)
-    {
-        $this->hangingIndent = $hangingIndent;
-    }
-
-    /**
      * @return string
      */
-    public function getSecondFieldAlign()
+    public function getSecondFieldAlign(): ?string
     {
         return $this->secondFieldAlign;
     }
 
     /**
-     * @param string $secondFieldAlign
-     */
-    public function setSecondFieldAlign($secondFieldAlign)
-    {
-        $this->secondFieldAlign = $secondFieldAlign;
-    }
-
-    /**
      * @return string
      */
-    public function getLineSpacing()
+    public function getLineSpacing(): ?string
     {
         return $this->lineSpacing;
     }
 
     /**
-     * @param string $lineSpacing
-     */
-    public function setLineSpacing($lineSpacing)
-    {
-        $this->lineSpacing = $lineSpacing;
-    }
-
-    /**
      * @return string
      */
-    public function getEntrySpacing()
+    public function getEntrySpacing(): ?string
     {
         return $this->entrySpacing;
-    }
-
-    /**
-     * @param string $entrySpacing
-     */
-    public function setEntrySpacing($entrySpacing)
-    {
-        $this->entrySpacing = $entrySpacing;
     }
 }

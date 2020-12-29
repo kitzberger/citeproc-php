@@ -10,10 +10,14 @@
 namespace Seboettg\CiteProc\Style;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Layout;
 use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Style\Options\BibliographyOptions;
+use Seboettg\CiteProc\Style\Options\NameOptions;
+use Seboettg\CiteProc\Style\Sort\Sort;
 use SimpleXMLElement;
 
 /**
@@ -30,21 +34,53 @@ use SimpleXMLElement;
  */
 class Bibliography extends StyleElement
 {
-    private $node;
+
+    /** @var BibliographyOptions */
+    private $bibliographyOptions;
+
+    /**
+     * @param SimpleXMLElement $node
+     * @param Root $parent
+     * @return Bibliography
+     * @throws InvalidStylesheetException
+     */
+    public static function factory(SimpleXMLElement $node, Root $parent): Bibliography
+    {
+        $nameOptions = NameOptions::updateNameOptions($node);
+        CiteProc::getContext()->setNameOptions($nameOptions, RenderingMode::BIBLIOGRAPHY());
+        /* cs:citation and cs:bibliography may include a cs:sort child element before the cs:layout element to
+         * specify the sorting order of respectively cites within citations, and bibliographic entries within
+         * the bibliography. In the absence of cs:sort, cites and bibliographic entries appear in the order in
+         * which they are cited.
+         */
+        //$sorting = new Sort($node->children()['sort']);
+        $sorting = Sort::factory($node->sort);
+        CiteProc::getContext()->setSorting(RenderingMode::BIBLIOGRAPHY(), $sorting);
+
+        $bibliographyOptions = BibliographyOptions::factory($node);
+        CiteProc::getContext()->setBibliographySpecificOptions($bibliographyOptions);
+
+        $bibliography = new Bibliography($nameOptions, $bibliographyOptions);
+        $layout = Layout::factory($node->layout);
+        if (null !== $layout) {
+            $layout->setParent($bibliography);
+            $layout->setSorting($sorting);
+            $layout->setStyleOptions($bibliographyOptions);
+        }
+        $bibliography->setLayout($layout);
+        $bibliography->setParent($parent);
+        return $bibliography;
+    }
 
     /**
      * Bibliography constructor.
-     * @param SimpleXMLElement $node
-     * @param Root $parent
-     * @throws InvalidStylesheetException
+     * @param NameOptions $nameOptions
+     * @param BibliographyOptions $bibliographyOptions
      */
-    public function __construct(SimpleXMLElement $node, Root $parent)
+    protected function __construct(NameOptions $nameOptions, BibliographyOptions $bibliographyOptions)
     {
-        parent::__construct($node, $parent);
-        $this->node = $node;
-        $bibliographyOptions = new BibliographyOptions($node);
-        CiteProc::getContext()->setBibliographySpecificOptions($bibliographyOptions);
-        $this->initInheritableNameAttributes($node);
+        $this->nameOptions = $nameOptions;
+        $this->bibliographyOptions = $bibliographyOptions;
     }
 
     /**
@@ -54,16 +90,9 @@ class Bibliography extends StyleElement
      */
     public function render($data, $citationNumber = null)
     {
-        if (!$this->attributesInitialized) {
-            $this->initInheritableNameAttributes($this->node);
-        }
-        $subsequentAuthorSubstitute = CiteProc::getContext()
-            ->getBibliographySpecificOptions()
-            ->getSubsequentAuthorSubstitute();
+        $subsequentAuthorSubstitute = $this->bibliographyOptions->getSubsequentAuthorSubstitute();
 
-        $subsequentAuthorSubstituteRule = CiteProc::getContext()
-            ->getBibliographySpecificOptions()
-            ->getSubsequentAuthorSubstituteRule();
+        $subsequentAuthorSubstituteRule = $this->bibliographyOptions->getSubsequentAuthorSubstituteRule();
 
         if ($subsequentAuthorSubstitute !== null && !empty($subsequentAuthorSubstituteRule)) {
             CiteProc::getContext()

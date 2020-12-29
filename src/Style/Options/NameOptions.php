@@ -10,6 +10,7 @@
 namespace Seboettg\CiteProc\Style\Options;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use SimpleXMLElement;
 
 class NameOptions
@@ -181,7 +182,7 @@ class NameOptions
      *
      * @var string
      */
-    private $form;
+    private $form = "long";
 
     private $nameForm = "long";
 
@@ -189,11 +190,18 @@ class NameOptions
 
     /**
      * @param SimpleXMLElement $node
+     * @param RenderingMode|null $mode
+     * @param NameOptions|null $nameOptions
+     * @return NameOptions
      */
-    public static function updateNameOptions(SimpleXMLElement $node)
-    {
-
-        $nameOptions = CiteProc::getContext()->getNameOptions();
+    public static function updateNameOptions(
+        SimpleXMLElement $node,
+        ?RenderingMode $mode = null,
+        ?NameOptions $nameOptions = null
+    ): NameOptions {
+        if (null === $nameOptions) {
+            $nameOptions = clone CiteProc::getContext()->getNameOptions($mode);
+        }
         foreach (self::$attributes as $nameAttribute) {
             $attribute = $node[$nameAttribute];
             if (!empty($attribute)) {
@@ -246,6 +254,7 @@ class NameOptions
                 }
             }
         }
+        return $nameOptions;
     }
 
     /**

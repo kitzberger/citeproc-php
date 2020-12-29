@@ -113,7 +113,7 @@ class NameTest extends TestCase
 
     public function testNameAttrEtAlUseFirst()
     {
-        $this->runTestSuite("nameattr_EtAlUseFirst");
+        $this->runTestSuite("nameattr_EtAlUseFirstOnCitationInBibliography");
     }
 
     public function testNameEtAlUseLast()
@@ -205,6 +205,11 @@ class NameTest extends TestCase
     public function testInitializeCyrillicName()
     {
         $this->runTestSuite("nameattr_initializeCyrillicName");
+    }
+
+    public function testAnd()
+    {
+        $this->runTestSuite("nameattr_AndSymbol");
     }
 
     public function testEnrichMarkupNames()

@@ -11,10 +11,14 @@ namespace Seboettg\CiteProc\Rendering\Name;
 
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
+use Seboettg\CiteProc\Rendering\Observer\StateChangedEvent;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Util\Factory;
-use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
+use Seboettg\Collection\ArrayList as ArrayList;
 use SimpleXMLElement;
 use stdClass;
 
@@ -44,63 +48,67 @@ use stdClass;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Substitute implements Rendering
+class Substitute implements Rendering, RenderingObserver
 {
+    use RenderingObserverTrait;
 
-    /**
-     * @var ArrayList
-     */
+    /** @var ArrayListInterface  */
     private $children;
 
-    /**
-     * @var Names
-     */
+    /** @var Names */
     private $parent;
 
     /**
-     * Substitute constructor.
      * @param SimpleXMLElement $node
      * @param Names $parent
-     * @throws InvalidStylesheetException
+     * @return Substitute
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, Names $parent)
+    public static function factory(SimpleXMLElement $node, Names $parent): Substitute
     {
-        $this->parent = $parent;
-        $this->children = new ArrayList();
+        $substitute = new Substitute();
+        $children = new ArrayList();
         foreach ($node->children() as $child) {
-
-            /** @var SimpleXMLElement $child */
             if ($child->getName() === "names") {
-
                 /** @var Names $names */
-                $names = Factory::create($child, $this);
+                $names = Factory::create($child, $substitute);
 
                 /* A shorthand version of cs:names without child elements, which inherits the attributes values set on
                 the cs:name and cs:et-al child elements of the original cs:names element, may also be used. */
                 if (!$names->hasEtAl()) {
                     // inherit et-al
-                    if ($this->parent->hasEtAl()) {
-                        $names->setEtAl($this->parent->getEtAl());
+                    if ($parent->hasEtAl()) {
+                        $names->setEtAl($parent->getEtAl());
                     }
                 }
                 if (!$names->hasName()) {
                     // inherit name
-                    if ($this->parent->hasName()) {
-                        $names->setName($this->parent->getName());
+                    if ($parent->hasName()) {
+                        $names->setName($parent->getName());
                     }
                 }
                 // inherit label
-                if (!$names->hasLabel() && $this->parent->hasLabel()) {
-                    $names->setLabel($this->parent->getLabel());
+                if (!$names->hasLabel() && $parent->hasLabel()) {
+                    $names->setLabel($parent->getLabel());
                 }
-
-                $this->children->append($names);
+                $children->append($names);
             } else {
-                $object = Factory::create($child, $this);
-                $this->children->append($object);
+                $object = Factory::create($child, $substitute);
+                $children->append($object);
             }
         }
+        $substitute->setChildren($children);
+        CiteProc::getContext()->addObserver($substitute);
+        return $substitute;
+    }
+
+    /**
+     * Substitute constructor.
+     */
+    public function __construct()
+    {
+        $this->children = new ArrayList();
+        $this->initObserver();
     }
 
     /**
@@ -111,8 +119,8 @@ class Substitute implements Rendering
     public function render($data, $citationNumber = null)
     {
         $ret = [];
-        if (CiteProc::getContext()->getRenderingState()->getValue() !== RenderingState::SORTING) {
-            CiteProc::getContext()->setRenderingState(new RenderingState(RenderingState::SUBSTITUTION));
+        if (!$this->state->equals(RenderingState::SORTING())) {
+            $this->notifyAll(new StateChangedEvent(RenderingState::SUBSTITUTION()));
         }
 
         /** @var Rendering $child */
@@ -125,9 +133,14 @@ class Substitute implements Rendering
                 break;
             }
         }
-        if (CiteProc::getContext()->getRenderingState()->getValue() === RenderingState::SUBSTITUTION) {
-            CiteProc::getContext()->setRenderingState(new RenderingState(RenderingState::RENDERING));
+        if ($this->state->equals(RenderingState::SUBSTITUTION())) {
+            $this->notifyAll(new StateChangedEvent(RenderingState::RENDERING()));
         }
         return implode("", $ret);
+    }
+
+    private function setChildren(ArrayListInterface $children): void
+    {
+        $this->children = $children;
     }
 }

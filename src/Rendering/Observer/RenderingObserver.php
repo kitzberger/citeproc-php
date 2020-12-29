@@ -10,8 +10,12 @@ declare(strict_types=1);
 
 namespace Seboettg\CiteProc\Rendering\Observer;
 
+use Seboettg\CiteProc\Context;
+
 interface RenderingObserver
 {
     public function initObserver(): void;
+    public function setContext(Context $context);
     public function notify(RenderingEvent $event): void;
+    public function notifyAll(RenderingEvent $event): void;
 }

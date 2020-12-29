@@ -10,10 +10,15 @@
 namespace Seboettg\CiteProc\Style;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Data\DataList;
-use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Layout;
+use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Style\Options\CitationOptions;
-use Seboettg\Collection\ArrayList;
+use Seboettg\CiteProc\Style\Options\NameOptions;
+use Seboettg\CiteProc\Style\Sort\Sort;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
+use Seboettg\Collection\ArrayList as ArrayList;
 use SimpleXMLElement;
 
 /**
@@ -30,33 +35,53 @@ use SimpleXMLElement;
  */
 class Citation extends StyleElement
 {
+    /** @var CitationOptions */
+    private $citationOptions;
 
-    private $node;
+    public static function factory(SimpleXMLElement $node, Root $parent): Citation
+    {
+        $nameOptions = NameOptions::updateNameOptions($node);
+        CiteProc::getContext()->setNameOptions($nameOptions, RenderingMode::CITATION());
+        /* cs:citation and cs:bibliography may include a cs:sort child element before the cs:layout element to
+         * specify the sorting order of respectively cites within citations, and bibliographic entries within
+         * the bibliography. In the absence of cs:sort, cites and bibliographic entries appear in the order in
+         * which they are cited.
+         */
+
+        $sorting = Sort::factory($node->sort);
+        CiteProc::getContext()->setSorting(RenderingMode::CITATION(), $sorting);
+        $citationOptions = CitationOptions::factory($node);
+        CiteProc::getContext()->setCitationSpecificOptions($citationOptions);
+        $citation = new Citation($nameOptions, $citationOptions);
+        $layout = Layout::factory($node->layout);
+        if (null !== $layout) {
+            $layout->setParent($citation);
+            $layout->setSorting($sorting);
+            $layout->setStyleOptions($citationOptions);
+        }
+        $citation->setLayout($layout);
+        $citation->setParent($parent);
+        return $citation;
+    }
 
     /**
      * Citation constructor.
-     * @param SimpleXMLElement $node
-     * @param $parent
-     * @throws InvalidStylesheetException
+     * @param NameOptions $nameOptions
+     * @param CitationOptions $citationOptions
      */
-    public function __construct(SimpleXMLElement $node, $parent)
+    public function __construct(NameOptions $nameOptions, CitationOptions $citationOptions)
     {
-        parent::__construct($node, $parent);
-        $citationOptions = new CitationOptions($node);
-        CiteProc::getContext()->setCitationSpecificOptions($citationOptions);
-        $this->node = $node;
+        $this->nameOptions = $nameOptions;
+        $this->citationOptions = $citationOptions;
     }
 
     /**
      * @param array|DataList $data
-     * @param ArrayList $citationItems
+     * @param ArrayListInterface $citationItems
      * @return string
      */
-    public function render($data, $citationItems)
+    public function render($data, ArrayListInterface $citationItems)
     {
-        if (!$this->attributesInitialized) {
-            $this->initInheritableNameAttributes($this->node);
-        }
         return $this->layout->render($data, $citationItems);
     }
 }

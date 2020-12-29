@@ -9,18 +9,19 @@ declare(strict_types=1);
 namespace Seboettg\CiteProc\Rendering\Observer;
 
 use Seboettg\CiteProc\Data\DataList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 
 class CitationDataChangedEvent implements RenderingEvent
 {
-    /** @var DataList */
+    /** @var ArrayListInterface */
     protected $citationData;
 
-    public function __construct(DataList $citationData)
+    public function __construct(ArrayListInterface $citationData)
     {
         $this->citationData = $citationData;
     }
 
-    public function getCitationData(): DataList
+    public function getCitationData(): ArrayListInterface
     {
         return $this->citationData;
     }

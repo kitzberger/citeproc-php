@@ -10,11 +10,11 @@
 namespace Seboettg\CiteProc\Rendering\Name;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\HasParent;
-use Seboettg\CiteProc\Style\InheritableNameAttributesTrait;
-use Seboettg\CiteProc\Style\Options\DemoteNonDroppingParticle;
+use Seboettg\CiteProc\Style\Options\NameOptions;
 use Seboettg\CiteProc\Style\Options\SubsequentAuthorSubstituteRule;
 use Seboettg\CiteProc\Styles\AffixesTrait;
 use Seboettg\CiteProc\Styles\DelimiterTrait;
@@ -38,8 +38,7 @@ use stdClass;
  */
 class Name implements HasParent
 {
-    use InheritableNameAttributesTrait,
-        FormattingTrait,
+    use FormattingTrait,
         AffixesTrait,
         DelimiterTrait;
 
@@ -75,6 +74,18 @@ class Name implements HasParent
      */
     private $variable;
 
+    /** @var NameOptions[] */
+    private $nameOptionsArray;
+
+    /** @var NameOptions|null */
+    private $nameOptions;
+
+    /** @var string */
+    private $and;
+
+    /** @var NameOrderRenderer */
+    private $nameOrderRenderer;
+
     /**
      * Name constructor.
      *
@@ -98,17 +109,19 @@ class Name implements HasParent
             }
         }
 
-        foreach ($node->attributes() as $attribute) {
-            switch ($attribute->getName()) {
-                case 'form':
-                    $this->form = (string) $attribute;
-                    break;
-            }
-        }
+        $this->nameOptionsArray[RenderingMode::CITATION] =
+            NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::CITATION()));
+        $this->nameOptionsArray[RenderingMode::BIBLIOGRAPHY] =
+            NameOptions::updateNameOptions($node, null, $parent->getNameOptions(RenderingMode::BIBLIOGRAPHY()));
 
         $this->initFormattingAttributes($node);
         $this->initAffixesAttributes($node);
         $this->initDelimiterAttributes($node);
+        $this->nameOrderRenderer = new NameOrderRenderer(
+            CiteProc::getContext()->getGlobalOptions(),
+            $this->nameParts,
+            $this->delimiter
+        );
     }
 
     /**
@@ -120,14 +133,13 @@ class Name implements HasParent
      */
     public function render($data, $var, $citationNumber = null)
     {
+        $this->nameOptions = $this->nameOptionsArray[(string)CiteProc::getContext()->getMode()];
+        $this->nameOrderRenderer->setNameOptions($this->nameOptions);
         $this->variable = $var;
         $name = $data->{$var};
-        if (!$this->attributesInitialized) {
-            $this->initInheritableNameAttributes($this->node);
-        }
-        if ("text" === $this->and) {
+        if ("text" === $this->nameOptions->getAnd()) {
             $this->and = CiteProc::getContext()->getLocale()->filter('terms', 'and')->single;
-        } elseif ('symbol' === $this->and) {
+        } elseif ('symbol' === $this->nameOptions->getAnd()) {
             $this->and = '&#38;';
         }
 
@@ -144,7 +156,7 @@ class Name implements HasParent
         possible when the original name list has at least two more names than the truncated name list (for this
         the value of et-al-use-first/et-al-subsequent-min must be at least 2 less than the value of
         et-al-min/et-al-subsequent-use-first). */
-        if ($this->etAlUseLast) {
+        if ("symbol" !== $this->nameOptions->getAnd() && $this->nameOptions->isEtAlUseLast()) {
             $this->and = "…"; // set "and"
             $this->etAl = null; //reset $etAl;
         }
@@ -163,7 +175,7 @@ class Name implements HasParent
         /* A third value, “count”, returns the total number of names that would otherwise be rendered by the use of the
         cs:names element (taking into account the effects of et-al abbreviation and editor/translator collapsing),
         which allows for advanced sorting. */
-        if ($this->form == 'count') {
+        if ($this->nameOptions->getForm() == 'count') {
             return (int) count($resultNames);
         }
 
@@ -180,9 +192,13 @@ class Name implements HasParent
     {
         $nameObj = $this->cloneNamePOSC($nameItem);
 
-        $useInitials = $this->initialize && !is_null($this->initializeWith) && $this->initializeWith !== false;
+        $useInitials = $this->nameOptions->isInitialize() &&
+            !is_null($this->nameOptions->getInitializeWith()) && $this->nameOptions->getInitializeWith() !== false;
         if ($useInitials && isset($nameItem->given)) {
-            $nameObj->given = StringHelper::initializeBySpaceOrHyphen($nameItem->given, $this->initializeWith);
+            $nameObj->given = StringHelper::initializeBySpaceOrHyphen(
+                $nameItem->given,
+                $this->nameOptions->getInitializeWith()
+            );
         }
 
         $renderedResult = $this->getNamesString($nameObj, $rank);
@@ -204,7 +220,7 @@ class Name implements HasParent
             return $text;
         }
 
-        $text = $this->nameOrder($name, $rank);
+        $text = $this->nameOrderRenderer->render($name, $rank);
 
         //contains nbsp prefixed by normal space or followed by normal space?
         $text = htmlentities($text);
@@ -253,8 +269,8 @@ class Name implements HasParent
         if (count($data) > 1
             && !empty($resultNames)
             && !empty($this->etAl)
-            && !empty($this->etAlMin)
-            && !empty($this->etAlUseFirst)
+            && !empty($this->nameOptions->getEtAlMin())
+            && !empty($this->nameOptions->getEtAlUseFirst())
             && count($data) != count($resultNames)
         ) {
             /* By default, when a name list is truncated to a single name, the name and the “et-al” (or “and others”)
@@ -262,7 +278,7 @@ class Name implements HasParent
             name delimiter is used (e.g. “Doe, Smith, et al.”). This behavior can be changed with the
             delimiter-precedes-et-al attribute. */
 
-            switch ($this->delimiterPrecedesEtAl) {
+            switch ($this->nameOptions->getDelimiterPrecedesEtAl()) {
                 case 'never':
                     $text = $text . " " . $this->etAl;
                     break;
@@ -292,9 +308,10 @@ class Name implements HasParent
         matches or exceeds the number set on et-al-min, the rendered name list is truncated after reaching the number of
         names set on et-al-use-first.  */
 
-        if (isset($this->etAlMin) && isset($this->etAlUseFirst)) {
-            if ($this->etAlMin <= $cnt) {
-                if ($this->etAlUseLast && $this->etAlMin - $this->etAlUseFirst >= 2) {
+        if (null !== $this->nameOptions->getEtAlMin() && null !== $this->nameOptions->getEtAlUseFirst()) {
+            if ($this->nameOptions->getEtAlMin() <= $cnt) {
+                if ($this->nameOptions->isEtAlUseLast() &&
+                    $this->nameOptions->getEtAlMin() - $this->nameOptions->getEtAlMin() >= 2) {
                     /* et-al-use-last: When set to “true” (the default is “false”), name lists truncated by et-al
                     abbreviation are followed by the name delimiter, the ellipsis character, and the last name of the
                     original name list. This is only possible when the original name list has at least two more names
@@ -303,7 +320,7 @@ class Name implements HasParent
 
                     $lastName = array_pop($resultNames); //remove last Element and remember in $lastName
                 }
-                for ($i = $this->etAlUseFirst; $i < $cnt; ++$i) {
+                for ($i = $this->nameOptions->getEtAlUseFirst(); $i < $cnt; ++$i) {
                     unset($resultNames[$i]);
                 }
 
@@ -452,7 +469,7 @@ class Name implements HasParent
     protected function renderDelimiterPrecedesLastNever($resultNames)
     {
         $text = "";
-        if (!$this->etAlUseLast) {
+        if (!$this->nameOptions->isEtAlUseLast()) {
             if (count($resultNames) === 1) {
                 $text = $resultNames[0];
             } elseif (count($resultNames) === 2) {
@@ -502,7 +519,7 @@ class Name implements HasParent
     {
         $text = "";
         if (!empty($this->and) && empty($this->etAl)) {
-            switch ($this->delimiterPrecedesLast) {
+            switch ($this->nameOptions->getDelimiterPrecedesLast()) {
                 case 'after-inverted-name':
                     //TODO: implement
                     break;
@@ -520,115 +537,12 @@ class Name implements HasParent
         return $text;
     }
 
-
-    /**
-     * @param stdClass $data
-     * @param integer  $rank
-     *
-     * @return string
-     * @throws CiteProcException
-     */
-    private function nameOrder($data, $rank)
-    {
-        $nameAsSortOrder = (($this->nameAsSortOrder === "first" && $rank === 0) || $this->nameAsSortOrder === "all");
-        $demoteNonDroppingParticle = CiteProc::getContext()->getGlobalOptions()->getDemoteNonDroppingParticles();
-        $normalizedName = NameHelper::normalizeName($data);
-        if (StringHelper::isLatinString($normalizedName) || StringHelper::isCyrillicString($normalizedName)) {
-            if ($this->form === "long"
-                && $nameAsSortOrder
-                && ((string) $demoteNonDroppingParticle === DemoteNonDroppingParticle::NEVER
-                || (string) $demoteNonDroppingParticle === DemoteNonDroppingParticle::SORT_ONLY)
-            ) {
-                // [La] [Fontaine], [Jean] [de], [III]
-                NameHelper::prependParticleTo($data, "family", "non-dropping-particle");
-                NameHelper::appendParticleTo($data, "given", "dropping-particle");
-
-                list($family, $given) = $this->renderNameParts($data);
-
-                $text = $family . (!empty($given) ? $this->sortSeparator . $given : "");
-                $text .= !empty($data->suffix) ? $this->sortSeparator . $data->suffix : "";
-            } elseif ($this->form === "long"
-                && $nameAsSortOrder
-                && (is_null($demoteNonDroppingParticle)
-                || (string) $demoteNonDroppingParticle === DemoteNonDroppingParticle::DISPLAY_AND_SORT)
-            ) {
-                // [Fontaine], [Jean] [de] [La], [III]
-                NameHelper::appendParticleTo($data, "given", "dropping-particle");
-                NameHelper::appendParticleTo($data, "given", "non-dropping-particle");
-                list($family, $given) = $this->renderNameParts($data);
-                $text = $family;
-                $text .= !empty($given) ? $this->sortSeparator . $given : "";
-                $text .= !empty($data->suffix) ? $this->sortSeparator . $data->suffix : "";
-            } elseif ($this->form === "long" && $nameAsSortOrder && empty($demoteNonDroppingParticle)) {
-                list($family, $given) = $this->renderNameParts($data);
-                $text = $family;
-                $text .= !empty($given) ? $this->delimiter . $given : "";
-                $text .= !empty($data->suffix) ? $this->sortSeparator . $data->suffix : "";
-            } elseif ($this->form === "short") {
-                // [La] [Fontaine]
-                NameHelper::prependParticleTo($data, "family", "non-dropping-particle");
-                $text = $data->family;
-            } else {// form "long" (default)
-                // [Jean] [de] [La] [Fontaine] [III]
-                NameHelper::prependParticleTo($data, "family", "non-dropping-particle");
-                NameHelper::prependParticleTo($data, "family", "dropping-particle");
-                NameHelper::appendParticleTo($data, "family", "suffix");
-                list($family, $given) = $this->renderNameParts($data);
-                $text = !empty($given) ? $given . " " . $family : $family;
-            }
-        } elseif (StringHelper::isAsianString(NameHelper::normalizeName($data))) {
-            $text = $this->form === "long" ? $data->family . $data->given : $data->family;
-        } else {
-            $text = $this->form === "long" ? $data->family . " " . $data->given : $data->family;
-        }
-        return $text;
-    }
-
-    /**
-     * @param  $data
-     * @return array
-     */
-    private function renderNameParts($data)
-    {
-        $given = "";
-        if (array_key_exists("family", $this->nameParts)) {
-            $family = $this->nameParts["family"]->render($data);
-        } else {
-            $family = $data->family;
-        }
-        if (isset($data->given)) {
-            if (array_key_exists("given", $this->nameParts)) {
-                $given = $this->nameParts["given"]->render($data);
-            } else {
-                $given = $data->given;
-            }
-        }
-        return [$family, $given];
-    }
-
-
     /**
      * @return string
      */
     public function getForm()
     {
-        return $this->form;
-    }
-
-    /**
-     * @return string
-     */
-    public function isNameAsSortOrder()
-    {
-        return $this->nameAsSortOrder;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDelimiter()
-    {
-        return $this->delimiter;
+        return $this->nameOptions->getForm();
     }
 
     /**

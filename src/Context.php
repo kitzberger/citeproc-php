@@ -13,6 +13,8 @@ use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Config\RenderingState;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Locale\Locale;
+use Seboettg\CiteProc\Rendering\Name\Name;
+use Seboettg\CiteProc\Rendering\Name\Names;
 use Seboettg\CiteProc\Rendering\Observer\CitationDataChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\CitationItemsChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\CitedItemsChanged;
@@ -120,15 +122,16 @@ class Context implements RenderingObservable
         $this->citedItems = new ArrayList();
         $this->citationItems = new ArrayList();
         $this->observers = new ArrayList();
-        $this->nameOptions = new NameOptions();
+        $this->nameOptions[Root::class] = new NameOptions();
     }
 
     public function addObserver(RenderingObserver $observer): void
     {
         $this->observers->append($observer);
+        $observer->setContext($this);
     }
 
-    private function notifyObservers(RenderingEvent $event)
+    public function notifyObservers(RenderingEvent $event)
     {
         /** @var RenderingObserver $observer */
         foreach ($this->observers as $observer) {
@@ -136,14 +139,22 @@ class Context implements RenderingObservable
         }
     }
 
-    public function getNameOptions(): NameOptions
+    public function getNameOptions(?RenderingMode $mode = null): NameOptions
     {
-        return $this->nameOptions;
+        if (null === $mode) {
+            return $this->nameOptions[Root::class];
+        } else {
+            return $this->nameOptions[(string) $mode] ?? $this->nameOptions[Root::class];
+        }
     }
 
-    public function setNameOptions(NameOptions $nameOptions): void
+    public function setNameOptions(NameOptions $nameOptions, ?RenderingMode $mode = null): void
     {
-        $this->nameOptions = $nameOptions;
+        if (null === $mode) {
+            $this->nameOptions[Root::class] = $nameOptions;
+        } else {
+            $this->nameOptions[(string) $mode] = $nameOptions;
+        }
     }
 
     public function addMacro($key, $macro)
@@ -221,14 +232,14 @@ class Context implements RenderingObservable
         return $this->citationsAsArray;
     }
 
-    public function setSorting($sorting)
+    public function setSorting(RenderingMode $mode, $sorting)
     {
-        $this->sorting = $sorting;
+        $this->sorting[(string)$mode] = $sorting;
     }
 
     public function getSorting()
     {
-        return $this->sorting;
+        return $this->sorting[(string)$this->mode] ?? null;
     }
 
     /**

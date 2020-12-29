@@ -10,19 +10,20 @@
 namespace Seboettg\CiteProc\Rendering\Name;
 
 use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Label\Label;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Config\RenderingState;
-use Seboettg\CiteProc\Style\InheritableNameAttributesTrait;
-use Seboettg\CiteProc\Styles\AffixesTrait;
-use Seboettg\CiteProc\Styles\DelimiterTrait;
-use Seboettg\CiteProc\Styles\FormattingTrait;
+use Seboettg\CiteProc\Style\Options\NameOptions;
+use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Util\Factory;
 use Seboettg\CiteProc\Util\NameHelper;
-use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList as ArrayList;
 use SimpleXMLElement;
 use stdClass;
 
@@ -33,12 +34,9 @@ use stdClass;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Names implements Rendering, HasParent
+class Names implements Rendering, HasParent, RenderingObserver
 {
-    use DelimiterTrait,
-        AffixesTrait,
-        FormattingTrait,
-        InheritableNameAttributesTrait;
+    use RenderingObserverTrait;
 
     /**
      * Variables (selected with the required variable attribute), each of which can contain multiple names (e.g. the
@@ -110,46 +108,64 @@ class Names implements Rendering, HasParent
 
     private $parent;
 
+    /** @var StylesRenderer */
+    protected $stylesRenderer;
+
+    /** @var NameOptions[] */
+    private $nameOptions;
+
     /**
-     * Names constructor.
-     *
-     * @param  SimpleXMLElement $node
-     * @param  $parent
+     * @param SimpleXMLElement $node
+     * @return Names
      * @throws InvalidStylesheetException
      */
-    public function __construct(SimpleXMLElement $node, $parent = null)
+    public static function factory(SimpleXMLElement $node): Names
     {
-        $this->initInheritableNameAttributes($node);
-        $this->parent = $parent;
-        /**
-         * @var SimpleXMLElement $child
-         */
+        $nameOptions[RenderingMode::CITATION] = NameOptions::updateNameOptions($node, RenderingMode::CITATION());
+        $nameOptions[RenderingMode::BIBLIOGRAPHY] = NameOptions::updateNameOptions(
+            $node,
+            RenderingMode::BIBLIOGRAPHY()
+        );
+        $stylesRenderer = StylesRenderer::factory($node);
+        $names = new self($stylesRenderer, $nameOptions);
         foreach ($node->children() as $child) {
             switch ($child->getName()) {
                 case "name":
-                    $this->name = Factory::create($child, $this);
+                    /** @var Name $name */
+                    $name = Factory::create($child, $names);
+                    $names->setName($name);
                     break;
                 case "label":
-                    $this->label = Factory::create($child);
+                    $label = Factory::create($child);
+                    $names->setLabel($label);
                     break;
                 case "substitute":
-                    $this->substitute = new Substitute($child, $this);
+                    $substitute = Substitute::factory($child, $names);
+                    $names->setSubstitute($substitute);
                     break;
                 case "et-al":
-                    $this->etAl = Factory::create($child);
+                    $etAl = Factory::create($child);
+                    $names->setEtAl($etAl);
             }
         }
 
-        foreach ($node->attributes() as $attribute) {
-            if ("variable" === $attribute->getName()) {
-                $this->variables = new ArrayList(...explode(" ", (string) $attribute));
-                break;
-            }
-        }
+        $variables = new ArrayList(...explode(" ", (string)$node['variable']));
+        $names->setVariables($variables);
+        CiteProc::getContext()->addObserver($names);
+        return $names;
+    }
 
-        $this->initDelimiterAttributes($node);
-        $this->initAffixesAttributes($node);
-        $this->initFormattingAttributes($node);
+    /**
+     * Names constructor.
+     * @param StylesRenderer $stylesRenderer
+     * @param NameOptions[]
+     */
+    public function __construct(StylesRenderer $stylesRenderer, array $nameOptions)
+    {
+        $this->stylesRenderer = $stylesRenderer;
+        $this->nameOptions = $nameOptions;
+        $this->variables = new ArrayList();
+        $this->initObserver();
     }
 
     /**
@@ -183,7 +199,9 @@ class Names implements Rendering, HasParent
                 } else {
                     $arr = [];
                     foreach ($data->editor as $editor) {
-                        $edt = $this->format($editor->family.", ".$editor->given);
+                        $edt = $this->stylesRenderer->renderFormatting(
+                            sprintf("%s, %s", $editor->family, $editor->given)
+                        );
                         $results[] = NameHelper::addExtendedMarkup('editor', $editor, $edt);
                     }
                     $str .= implode($this->delimiter, $arr);
@@ -192,11 +210,9 @@ class Names implements Rendering, HasParent
                     $this->label->setVariable("editortranslator");
                     $str .= $this->label->render($data);
                 }
-                $vars = $this->variables->toArray();
-                $vars = array_filter($vars, function ($value) {
-                    return !($value === "editor" || $value === "translator");
+                $this->variables = $this->variables->filter(function ($value) {
+                    return $value !== "editor" && $value !== "translator";
                 });
-                $this->variables->setArray($vars);
             }
         }
 
@@ -213,16 +229,18 @@ class Names implements Rendering, HasParent
                     if (is_numeric($name) && $this->name->getForm() === "count") {
                         $results = $this->addCountValues($res, $results);
                     } else {
-                        $results[] = $this->format($name);
+                        $results[] = $this->stylesRenderer->renderFormatting($name);
                     }
                 } else {
                     foreach ($data->{$var} as $name) {
-                        $formatted = $this->format($name->given." ".$name->family);
+                        $formatted = $this->stylesRenderer->renderFormatting(
+                            sprintf("%s %s", $name->given, $name->family)
+                        );
                         $results[] = NameHelper::addExtendedMarkup($var, $name, $formatted);
                     }
                 }
                 // suppress substituted variables
-                if (CiteProc::getContext()->getRenderingState()->getValue() === RenderingState::SUBSTITUTION) {
+                if ($this->state->equals(RenderingState::SUBSTITUTION())) {
                     unset($data->{$var});
                 }
             } else {
@@ -231,9 +249,9 @@ class Names implements Rendering, HasParent
                 }
             }
         }
-        $results = $this->filterEmpty($results);
+        $results = array_filter($results);
         $str .= implode($this->delimiter, $results);
-        return !empty($str) ? $this->addAffixes($str) : "";
+        return !empty($str) ? $this->stylesRenderer->renderAffixes($str) : "";
     }
 
 
@@ -247,7 +265,7 @@ class Names implements Rendering, HasParent
     {
         $this->label->setVariable($var);
         if (in_array($this->label->getForm(), ["verb", "verb-short"])) {
-            $name = $this->label->render($data).$name;
+            $name = $this->label->render($data) . $name;
         } else {
             $name .= $this->label->render($data);
         }
@@ -272,115 +290,82 @@ class Names implements Rendering, HasParent
         return $results;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasEtAl()
+    public function hasEtAl(): bool
     {
         return !empty($this->etAl);
     }
 
-    /**
-     * @return EtAl
-     */
-    public function getEtAl()
+    public function getEtAl(): ?EtAl
     {
         return $this->etAl;
     }
 
-    /**
-     * @param  EtAl $etAl
-     * @return $this
-     */
-    public function setEtAl(EtAl $etAl)
+    public function setEtAl(?EtAl $etAl): void
     {
         $this->etAl = $etAl;
-        return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasName()
-    {
-        return !empty($this->name);
-    }
-
-    /**
-     * @return Name
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param  Name $name
-     * @return $this
-     */
-    public function setName(Name $name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDelimiter()
-    {
-        return $this->delimiter;
-    }
-
-    /**
-     * @return ArrayList
-     */
-    public function getVariables()
+    public function getVariables(): ArrayList\ArrayListInterface
     {
         return $this->variables;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasLabel()
+    public function setVariables(ArrayList\ArrayListInterface $variables): void
+    {
+        $this->variables = $variables;
+    }
+
+    public function hasLabel(): bool
     {
         return !empty($this->label);
     }
 
-    /**
-     * @return Label
-     */
-    public function getLabel()
+    public function getLabel(): ?Label
     {
         return $this->label;
     }
 
-    /**
-     * @param Label $label
-     */
-    public function setLabel($label)
+    public function setLabel(?Label $label)
     {
         $this->label = $label;
     }
 
-    /**
-     * @return mixed
-     */
+    public function hasName(): bool
+    {
+        return !empty($this->name);
+    }
+
+    public function getName(): ?Name
+    {
+        return $this->name;
+    }
+
+    public function setName(Name $name): void
+    {
+        $this->name = $name;
+    }
+
+    public function setParent($parent): void
+    {
+        $this->parent = $parent;
+    }
+
     public function getParent()
     {
         return $this->parent;
     }
 
-    private function filterEmpty(array $results)
+    private function setSubstitute(Substitute $substitute): void
     {
-        return array_filter($results, function ($item) {
-            return !empty($item);
-        });
+        $this->substitute = $substitute;
     }
 
-    public function setParent($parent)
+    /**
+     * @param RenderingMode $mode
+     * @return NameOptions
+     */
+    public function getNameOptions(RenderingMode $mode): NameOptions
     {
-        $this->parent = $parent;
+        return $this->nameOptions[(string)$mode];
     }
 }

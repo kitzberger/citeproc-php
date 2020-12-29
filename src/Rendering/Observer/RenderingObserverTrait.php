@@ -12,6 +12,7 @@ namespace Seboettg\CiteProc\Rendering\Observer;
 
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Config\RenderingState;
+use Seboettg\CiteProc\Context;
 use Seboettg\Collection\ArrayList;
 use Seboettg\Collection\ArrayList\ArrayListInterface;
 
@@ -25,6 +26,9 @@ trait RenderingObserverTrait
 
     /** @var RenderingState */
     private $state;
+
+    /** @var Context */
+    private $context;
 
     public function initObserver(): void
     {
@@ -44,5 +48,15 @@ trait RenderingObserverTrait
         if ($event instanceof StateChangedEvent) {
             $this->state = $event->getRenderingState();
         }
+    }
+
+    public function notifyAll(RenderingEvent $event): void
+    {
+        $this->context->notifyObservers($event);
+    }
+
+    public function setContext(Context $context): void
+    {
+        $this->context = $context;
     }
 }

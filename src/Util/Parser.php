@@ -33,12 +33,26 @@ class Parser
      */
     public function parseStylesheet(SimpleXMLElement $styleSheet)
     {
-        $root = new Root();
-        $root->initInheritableNameAttributes($styleSheet);
+        $root = Root::factory($styleSheet);
         CiteProc::getContext()->setRoot($root);
         $globalOptions = new GlobalOptions($styleSheet);
         CiteProc::getContext()->setGlobalOptions($globalOptions);
 
+        foreach ($styleSheet as $node) {
+            $name = $node->getName();
+            switch ($name) {
+                case 'bibliography':
+                    $bibliography = Bibliography::factory($node, $root);
+                    CiteProc::getContext()->setBibliography($bibliography);
+                    break;
+                case 'citation':
+                    $citation = Citation::factory($node, $root);
+                    CiteProc::getContext()->setCitation($citation);
+                    break;
+            }
+        }
+        /* To consider the hierarchy of inheritable name options style elements bibliography as well as citation must be
+        parsed before macros are parsed */
         foreach ($styleSheet as $node) {
             $name = $node->getName();
             switch ($name) {
@@ -51,14 +65,6 @@ class Parser
                 case 'macro':
                     $macro = new Macro($node, $root);
                     CiteProc::getContext()->addMacro($macro->getName(), $macro);
-                    break;
-                case 'bibliography':
-                    $bibliography = new Bibliography($node, $root);
-                    CiteProc::getContext()->setBibliography($bibliography);
-                    break;
-                case 'citation':
-                    $citation = new Citation($node, $root);
-                    CiteProc::getContext()->setCitation($citation);
                     break;
             }
         }

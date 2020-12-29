@@ -1,0 +1,69 @@
+>>===== MODE =====>>
+bibliography
+<<===== MODE =====<<
+
+
+>>===== RESULT =====>>
+<div class="csl-bib-body">
+  <div class="csl-entry">Doe, J., &#38; Roe, J.</div>
+</div>
+<<===== RESULT =====<<
+
+
+>>===== CSL =====>>
+<style
+      xmlns="http://purl.org/net/xbiblio/csl"
+      class="note"
+      version="1.0">
+  <info>
+    <id />
+    <title />
+    <updated>2009-08-10T04:49:00+09:00</updated>
+  </info>
+  <macro name="author-bib">
+    <names variable="composer" delimiter=", ">
+      <name name-as-sort-order="all" and="symbol" sort-separator=", " initialize-with=". " delimiter=", " delimiter-precedes-last="always"/>
+      <substitute>
+        <names variable="author"/>
+        <names variable="illustrator"/>
+        <names variable="director">
+          <name name-as-sort-order="all" and="symbol" sort-separator=", " initialize-with=". " delimiter=", " delimiter-precedes-last="always"/>
+          <label form="long" prefix=" (" suffix=")" text-case="title"/>
+        </names>
+      </substitute>
+    </names>
+  </macro>
+  <citation>
+    <layout/>
+  </citation>
+  <bibliography hanging-indent="true" et-al-min="21" et-al-use-first="19" et-al-use-last="true" entry-spacing="0" line-spacing="2">
+    <layout>
+      <group delimiter=" ">
+        <group delimiter=". " suffix=".">
+          <text macro="author-bib"/>
+        </group>
+      </group>
+    </layout>
+  </bibliography>
+</style>
+<<===== CSL =====<<
+
+
+>>===== INPUT =====>>
+[
+    {
+        "author": [
+            {
+                "family": "Doe", 
+                "given": "John"
+            }, 
+            {
+                "family": "Roe", 
+                "given": "Jane"
+            }
+        ], 
+        "id": "ITEM-1", 
+        "type": "book"
+    }
+]
+<<===== INPUT =====<<

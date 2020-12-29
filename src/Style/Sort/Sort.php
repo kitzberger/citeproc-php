@@ -15,6 +15,7 @@ use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Util\DateHelper;
 use Seboettg\CiteProc\Util\Variables;
 use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 
 /**
@@ -40,18 +41,24 @@ class Sort
      */
     private $sortingKeys;
 
-    /**
-     * @var SimpleXMLElement $node
-     */
-    public function __construct(SimpleXMLElement $node)
+    public static function factory(?SimpleXMLElement $node): ?Sort
     {
-        $this->sortingKeys = new ArrayList();
-        /** @var SimpleXMLElement $child */
-        foreach ($node->children() as $child) {
-            if ("key" === $child->getName()) {
-                $this->sortingKeys->append(new Key($child));
+        if ($node && $node->children()->count() > 0) {
+            $sortingKeys = new ArrayList();
+            /** @var SimpleXMLElement $child */
+            foreach ($node->children() as $child) {
+                if ("key" === $child->getName()) {
+                    $sortingKeys->append(Key::factory($child));
+                }
             }
+            return new Sort($sortingKeys);
         }
+        return null;
+    }
+
+    public function __construct(ArrayListInterface $sortingKeys)
+    {
+        $this->sortingKeys = $sortingKeys;
     }
 
     /**

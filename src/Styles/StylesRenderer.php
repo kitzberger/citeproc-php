@@ -27,7 +27,8 @@ class StylesRenderer
             'vertical-align'
         ];
 
-        $prefix = $suffix = $textCase = $display = null;
+        $textCase = $display = null;
+        $prefix = $suffix = "";
         $quotes = false;
         $formatting = new FormattingRenderer();
 

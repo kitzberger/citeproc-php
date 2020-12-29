@@ -53,6 +53,27 @@ class Key implements SortKey
      */
     private $rangePart = 1;
 
+    public static function factory(SimpleXMLElement $node)
+    {
+        $variable = $macro = null;
+        $sort = "ascending";
+        /** @var SimpleXMLElement $attribute */
+        foreach ($node->attributes() as $attribute) {
+            $name = $attribute->getName();
+            if ($name === "variable") {
+                $variable = (string) $attribute;
+            }
+            if ($name === "sort") {
+                $sort = (string) $attribute;
+            }
+            if ($name === "macro") {
+                $variable = "macro";
+                $macro = (string) $attribute;
+            }
+        }
+        return new self($variable, $macro, $sort);
+    }
+
     /**
      * Key constructor.
      * The cs:sort element must contain one or more cs:key child elements. The sort key, set as an attribute on cs:key,
@@ -63,24 +84,15 @@ class Key implements SortKey
      * corresponding et-al-min/et-al-subsequent-min, et-al-use-first/et-al-subsequent-use-first and et-al-use-last
      * attributes, and affect all names generated via macros called by cs:key.
      *
-     * @param SimpleXMLElement $node
+     * @param string|null $variable
+     * @param string|null $macro
+     * @param string|null $sort
      */
-    public function __construct(SimpleXMLElement $node)
+    public function __construct(?string $variable, ?string $macro, ?string $sort)
     {
-        /** @var SimpleXMLElement $attribute */
-        foreach ($node->attributes() as $attribute) {
-            $name = $attribute->getName();
-            if ($name === "variable") {
-                $this->variable = (string) $attribute;
-            }
-            if ($name === "sort") {
-                $this->sort = (string) $attribute;
-            }
-            if ($name === "macro") {
-                $this->variable = "macro";
-                $this->macro = (string) $attribute;
-            }
-        }
+        $this->variable = $variable;
+        $this->macro = $macro;
+        $this->sort = $sort;
     }
 
     /**

@@ -15,7 +15,7 @@ use Seboettg\CiteProc\Context;
 final class AffixesRenderer implements StylesRendererInterface
 {
 
-    public static function factory(Context $context, ?string $prefix, ?string $suffix)
+    public static function factory(Context $context, string $prefix, string $suffix)
     {
         $piq = $context
             ->getLocale()
@@ -37,7 +37,7 @@ final class AffixesRenderer implements StylesRendererInterface
     /** @var string */
     private $closeQuote = "";
 
-    public function __construct(?string $prefix, ?string $suffix, ?bool $punctuationInQuote, ?string $closeQuote)
+    public function __construct(string $prefix, string $suffix, ?bool $punctuationInQuote, ?string $closeQuote)
     {
         $this->prefix = $prefix;
         $this->suffix = $suffix;

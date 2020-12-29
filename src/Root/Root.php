@@ -9,7 +9,9 @@
 
 namespace Seboettg\CiteProc\Root;
 
+use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Style\InheritableNameAttributesTrait;
+use Seboettg\CiteProc\Style\Options\NameOptions;
 
 /**
  * Class Root
@@ -18,5 +20,19 @@ use Seboettg\CiteProc\Style\InheritableNameAttributesTrait;
  */
 class Root
 {
-    use InheritableNameAttributesTrait;
+    /** @var NameOptions */
+    private $nameOptions;
+
+    public static function factory($node)
+    {
+        $nameOptions = NameOptions::updateNameOptions($node);
+        CiteProc::getContext()->setNameOptions($nameOptions);
+
+        return new self($nameOptions);
+    }
+
+    public function __construct(NameOptions $nameOptions)
+    {
+        $this->nameOptions = $nameOptions;
+    }
 }
