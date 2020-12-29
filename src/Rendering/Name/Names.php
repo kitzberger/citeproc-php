@@ -127,7 +127,8 @@ class Names implements Rendering, HasParent, RenderingObserver
             RenderingMode::BIBLIOGRAPHY()
         );
         $stylesRenderer = StylesRenderer::factory($node);
-        $names = new self($stylesRenderer, $nameOptions);
+        $delimiter = (string) ($node->attributes()['delimiter'] ?? ', ');
+        $names = new self($stylesRenderer, $nameOptions, $delimiter);
         foreach ($node->children() as $child) {
             switch ($child->getName()) {
                 case "name":
@@ -159,11 +160,13 @@ class Names implements Rendering, HasParent, RenderingObserver
      * Names constructor.
      * @param StylesRenderer $stylesRenderer
      * @param NameOptions[]
+     * @param string $delimiter
      */
-    public function __construct(StylesRenderer $stylesRenderer, array $nameOptions)
+    public function __construct(StylesRenderer $stylesRenderer, array $nameOptions, string $delimiter)
     {
         $this->stylesRenderer = $stylesRenderer;
         $this->nameOptions = $nameOptions;
+        $this->delimiter = $delimiter;
         $this->variables = new ArrayList();
         $this->initObserver();
     }

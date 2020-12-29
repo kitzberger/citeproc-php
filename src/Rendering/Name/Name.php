@@ -135,6 +135,7 @@ class Name implements HasParent
     {
         $this->nameOptions = $this->nameOptionsArray[(string)CiteProc::getContext()->getMode()];
         $this->nameOrderRenderer->setNameOptions($this->nameOptions);
+        $this->delimiter = $this->nameOptions->getNameDelimiter() ?? $this->delimiter;
         $this->variable = $var;
         $name = $data->{$var};
         if ("text" === $this->nameOptions->getAnd()) {
@@ -311,7 +312,7 @@ class Name implements HasParent
         if (null !== $this->nameOptions->getEtAlMin() && null !== $this->nameOptions->getEtAlUseFirst()) {
             if ($this->nameOptions->getEtAlMin() <= $cnt) {
                 if ($this->nameOptions->isEtAlUseLast() &&
-                    $this->nameOptions->getEtAlMin() - $this->nameOptions->getEtAlMin() >= 2) {
+                    $this->nameOptions->getEtAlMin() - $this->nameOptions->getEtAlUseFirst() >= 2) {
                     /* et-al-use-last: When set to “true” (the default is “false”), name lists truncated by et-al
                     abbreviation are followed by the name delimiter, the ellipsis character, and the last name of the
                     original name list. This is only possible when the original name list has at least two more names

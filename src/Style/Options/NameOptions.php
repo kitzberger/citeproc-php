@@ -184,9 +184,9 @@ class NameOptions
      */
     private $form = "long";
 
-    private $nameForm = "long";
+    private $nameForm = null;
 
-    private $nameDelimiter = ", ";
+    private $nameDelimiter;
 
     /**
      * @param SimpleXMLElement $node
@@ -454,7 +454,7 @@ class NameOptions
      */
     public function getForm(): ?string
     {
-        return $this->form;
+        return $this->nameForm ?? $this->form;
     }
 
     /**
@@ -482,9 +482,9 @@ class NameOptions
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getNameDelimiter(): string
+    public function getNameDelimiter(): ?string
     {
         return $this->nameDelimiter;
     }

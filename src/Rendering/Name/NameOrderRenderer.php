@@ -59,6 +59,7 @@ class NameOrderRenderer
             $this->nameOptions->getNameAsSortOrder() === "all");
         $demoteNonDroppingParticle = $this->globalOptions->getDemoteNonDroppingParticles();
         $normalizedName = NameHelper::normalizeName($data);
+        $delimiter = $this->nameOptions->getNameDelimiter() ?? $this->delimiter;
         if (StringHelper::isLatinString($normalizedName) || StringHelper::isCyrillicString($normalizedName)) {
             if ($this->nameOptions->getForm() === "long"
                 && $nameAsSortOrder
@@ -89,7 +90,7 @@ class NameOrderRenderer
                 && empty($demoteNonDroppingParticle)) {
                 list($family, $given) = $this->renderNameParts($data);
                 $text = $family;
-                $text .= !empty($given) ? $this->delimiter . $given : "";
+                $text .= !empty($given) ? $delimiter . $given : "";
                 $text .= !empty($data->suffix) ? $this->nameOptions->getSortSeparator() . $data->suffix : "";
             } elseif ($this->nameOptions->getForm() === "short") {
                 // [La] [Fontaine]
