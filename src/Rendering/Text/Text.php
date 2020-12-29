@@ -35,7 +35,6 @@ use function Seboettg\CiteProc\ucfirst;
 
 class Text implements HasParent, Rendering, RenderingObserver
 {
-    use ConsecutivePunctuationCharacterTrait;
     use RenderingObserverTrait;
 
     /** @var RenderType|null */
@@ -285,9 +284,6 @@ class Text implements HasParent, Rendering, RenderingObserver
     {
         $text = $this->stylesRenderer->renderFormatting((string)$renderedText);
         $res = $this->stylesRenderer->renderAffixes($text);
-        if (!empty($res)) {
-            $res = $this->removeConsecutiveChars($res);
-        }
         $res = $this->stylesRenderer->renderQuotes($res);
         return $this->stylesRenderer->renderDisplay($res);
     }

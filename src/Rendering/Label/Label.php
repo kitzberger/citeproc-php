@@ -13,7 +13,6 @@ use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Locale\TermForm;
 use Seboettg\CiteProc\Rendering\Rendering;
-use Seboettg\CiteProc\Styles\FormattingTrait;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
 use stdClass;
@@ -26,9 +25,9 @@ use stdClass;
  */
 class Label implements Rendering
 {
-    use FormattingTrait;
-
     private $variable;
+
+    private $stripPeriods = false;
 
     /** @var TermForm  */
     private $form;
@@ -45,6 +44,7 @@ class Label implements Rendering
     public static function factory(SimpleXMLElement $node)
     {
         $variable = $form = $plural = null;
+        $stripPeriods = false;
         $context = CiteProc::getContext();
 
         foreach ($node->attributes() as $attribute) {
@@ -58,11 +58,13 @@ class Label implements Rendering
                 case "plural":
                     $plural = new Plural((string) $attribute);
                     break;
+                case "strip-periods":
+                    $stripPeriods = (bool) $attribute;
             }
         }
         $locale = $context->getLocale();
         $stylesRenderer = StylesRenderer::factory($node);
-        return new self($variable, $form, $plural, $stylesRenderer, $locale);
+        return new self($variable, $form, $plural, $stylesRenderer, $locale, $stripPeriods);
     }
 
 
@@ -73,19 +75,22 @@ class Label implements Rendering
      * @param Plural|null $plural
      * @param StylesRenderer $stylesRenderer
      * @param Locale $locale
+     * @param bool $stripPeriods
      */
     public function __construct(
         ?string $variable,
         ?TermForm $form,
         ?Plural $plural,
         StylesRenderer $stylesRenderer,
-        Locale $locale
+        Locale $locale,
+        bool $stripPeriods
     ) {
         $this->variable = $variable;
         $this->form = $form;
         $this->plural = $plural;
         $this->stylesRenderer = $stylesRenderer;
         $this->locale = $locale;
+        $this->stripPeriods = $stripPeriods;
     }
 
     /**
@@ -233,13 +238,13 @@ class Label implements Rendering
      * @param $text
      * @return string
      */
-    protected function formatting($text)
+    protected function formatting(?string $text): string
     {
         if (empty($text)) {
             return "";
         }
         if ($this->stripPeriods) {
-            $text = str_replace('.', '', $text);
+            //$text = str_replace('.', '', $text);
         }
 
         $text = preg_replace("/\s&\s/", " &#38; ", $text); //replace ampersands by html entity
