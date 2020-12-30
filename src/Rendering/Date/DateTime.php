@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -32,17 +33,19 @@ class DateTime extends \DateTime
 
     /**
      * DateTime constructor.
-     * @param string $year
-     * @param string $month
-     * @param string $day
+     * @param int|string $year
+     * @param int|string $month
+     * @param int|string $day
      * @throws Exception
      */
     public function __construct($year, $month, $day)
     {
         try {
-            parent::__construct("$year-$month-$day", new DateTimeZone("Europe/Berlin"));
+            parent::__construct(sprintf("%s-%s-%s", $year, $month, $day), new DateTimeZone("Europe/Berlin"));
         } catch (Exception $e) {
-            throw new InvalidDateTimeException("Could not create valid date with year=$year, month=$month, day=$day.");
+            throw new InvalidDateTimeException(
+                sprintf("Could not create valid date with year=%s, month=%s, day=%s.", $year, $month, $day)
+            );
         }
 
         $this->year = intval(self::format("Y"));
@@ -54,7 +57,7 @@ class DateTime extends \DateTime
      * @param int $year
      * @return $this
      */
-    public function setYear($year)
+    public function setYear(int $year): DateTime
     {
         $this->year = $year;
         return $this;
@@ -64,7 +67,7 @@ class DateTime extends \DateTime
      * @param int $month
      * @return $this
      */
-    public function setMonth($month)
+    public function setMonth(int $month): DateTime
     {
         $this->month = $month;
         return $this;
@@ -74,7 +77,7 @@ class DateTime extends \DateTime
      * @param int $day
      * @return $this
      */
-    public function setDay($day)
+    public function setDay(int $day): DateTime
     {
         $this->day = $day;
         return $this;
@@ -86,27 +89,19 @@ class DateTime extends \DateTime
      * @param int $day
      * @return $this
      */
-    public function setDate($year, $month, $day)
+    public function setDate($year, $month, $day): DateTime
     {
+        parent::setDate($year, $month, $day);
         $this->year = $year;
         $this->month = $month;
         $this->day = $day;
-        parent::setDate($year, $month, $day);
         return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getArray()
-    {
-        return [$this->year, $this->month, $this->day];
     }
 
     /**
      * @return int
      */
-    public function getYear()
+    public function getYear(): int
     {
         return $this->year;
     }
@@ -114,7 +109,7 @@ class DateTime extends \DateTime
     /**
      * @return int
      */
-    public function getMonth()
+    public function getMonth(): int
     {
         return $this->month;
     }
@@ -122,7 +117,7 @@ class DateTime extends \DateTime
     /**
      * @return int
      */
-    public function getDay()
+    public function getDay(): int
     {
         return $this->day;
     }
@@ -130,7 +125,7 @@ class DateTime extends \DateTime
     /**
      * @return string
      */
-    public function renderNumeric()
+    public function renderNumeric(): string
     {
         $ret  = $this->year;
         $ret .= $this->month > 0 && $this->month < 13 ? "-" . sprintf("%02s", $this->month) : "";

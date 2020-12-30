@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -13,6 +14,7 @@ use Exception;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Rendering\Date\DateRange\DateRangeRenderer;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
@@ -20,6 +22,7 @@ use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use Seboettg\CiteProc\Util;
 use Seboettg\Collection\ArrayList;
+use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 
 /**
@@ -42,38 +45,31 @@ class Date implements HasParent, RenderingObserver
     const DATE_RANGE_STATE_YEARMONTH    = 6; // 110
     const DATE_RANGE_STATE_YEARMONTHDAY = 7; // 111
 
-
     private static $localizedDateFormats = [
         'numeric',
         'text'
     ];
 
-    /**
-     * @var ArrayList
-     */
+    /** @var ArrayListInterface  */
     private $dateParts;
 
-    /**
-     * @var string
-     */
-    private $form = "";
+    /** @var string */
+    private $form;
 
-    /**
-     * @var string
-     */
-    private $variable = "";
+    /** @var string */
+    private $variable;
 
-    /**
-     * @var string
-     */
-    private $datePartsAttribute = "";
+    /** @var string */
+    private $datePartsAttribute;
 
-    /**
-     * @var StylesRenderer
-     */
+    /** @var StylesRenderer */
     private $stylesRenderer;
 
+    /** @var mixed */
     private $parent;
+
+    /** @var Locale */
+    private $locale;
 
     /**
      * @param SimpleXMLElement $node
@@ -82,6 +78,7 @@ class Date implements HasParent, RenderingObserver
      */
     public static function factory(SimpleXMLElement $node): Date
     {
+        $locale = CiteProc::getContext()->getLocale();
         $variable = $form = $datePartsAttribute = "";
         $dateParts = new ArrayList();
         foreach ($node->attributes() as $attribute) {
@@ -99,7 +96,7 @@ class Date implements HasParent, RenderingObserver
         foreach ($node->children() as $child) {
             if ($child->getName() === "date-part") {
                 $datePartName = (string) $child->attributes()["name"];
-                $dateParts->set($form . "-" . $datePartName, Util\Factory::create($child));
+                $dateParts->set(sprintf("%s-%s", $form, $datePartName), Util\Factory::create($child));
             }
         }
         $stylesRenderer = StylesRenderer::factory($node);
@@ -108,7 +105,8 @@ class Date implements HasParent, RenderingObserver
             $form,
             $datePartsAttribute,
             $dateParts,
-            $stylesRenderer
+            $stylesRenderer,
+            $locale
         );
     }
 
@@ -117,13 +115,15 @@ class Date implements HasParent, RenderingObserver
         string $form,
         string $datePartsAttribute,
         ArrayList $dateParts,
-        StylesRenderer $stylesRenderer
+        StylesRenderer $stylesRenderer,
+        Locale $locale
     ) {
         $this->variable = $variable;
         $this->form = $form;
         $this->datePartsAttribute = $datePartsAttribute;
         $this->dateParts = $dateParts;
         $this->stylesRenderer = $stylesRenderer;
+        $this->locale = $locale;
     }
 
     /**
@@ -132,7 +132,7 @@ class Date implements HasParent, RenderingObserver
      * @throws InvalidStylesheetException
      * @throws Exception
      */
-    public function render($data)
+    public function render($data): string
     {
         $ret = "";
         $var = null;
@@ -191,15 +191,17 @@ class Date implements HasParent, RenderingObserver
                 $toRender = 0;
                 if ($interval->y > 0 && in_array('year', $dateParts)) {
                     $toRender |= self::DATE_RANGE_STATE_YEAR;
-                    $delimiter = $this->dateParts->get($this->form."-year")->getRangeDelimiter();
+                    $delimiter = $this->dateParts->get(sprintf("%s-year", $this->form))->getRangeDelimiter();
                 }
                 if ($interval->m > 0 && $from->getMonth() - $to->getMonth() !== 0 && in_array('month', $dateParts)) {
                     $toRender |= self::DATE_RANGE_STATE_MONTH;
-                    $delimiter = $this->dateParts->get($this->form."-month")->getRangeDelimiter();
+                    $delimiter = $this->dateParts->get(sprintf("%s-month", $this->form))->getRangeDelimiter();
                 }
                 if ($interval->d > 0 && $from->getDay() - $to->getDay() !== 0 && in_array('day', $dateParts)) {
                     $toRender |= self::DATE_RANGE_STATE_DAY;
-                    $delimiter = $this->dateParts->get($this->form."-day")->getRangeDelimiter();
+                    /** @var DatePart $datePart */
+                    $datePart = $this->dateParts->get(sprintf("%s-day", $this->form));
+                    $delimiter = $datePart->getRangeDelimiter();
                 }
                 if ($toRender === self::DATE_RANGE_STATE_NONE) {
                     $ret .= $this->iterateAndRenderDateParts($dateParts, $data_);
@@ -209,14 +211,14 @@ class Date implements HasParent, RenderingObserver
             }
 
             if (isset($var->raw) && preg_match("/(\p{L}+)\s?([\-\–&,])\s?(\p{L}+)/u", $var->raw, $matches)) {
-                return $matches[1].$matches[2].$matches[3];
+                return $matches[1] . $matches[2] . $matches[3];
             }
         } elseif (!empty($this->datePartsAttribute)) {
             // fallback:
             // When there are no dateParts children, but date-parts attribute in date
             // render numeric
             $data = $this->createDateTime($var->{'date-parts'});
-            $ret = $this->renderNumeric($data[0]);
+            $ret = $data[0]->renderNumeric();
         }
 
         return !empty($ret) ? $this->renderStyles($ret) : "";
@@ -224,10 +226,10 @@ class Date implements HasParent, RenderingObserver
 
     /**
      * @param array $dates
-     * @return array
+     * @return DateTime[]
      * @throws Exception
      */
-    private function createDateTime($dates)
+    private function createDateTime(array $dates): array
     {
         $data = [];
         foreach ($dates as $date) {
@@ -261,7 +263,7 @@ class Date implements HasParent, RenderingObserver
      * @param $delimiter
      * @return string
      */
-    private function renderDateRange($toRender, DateTime $from, DateTime $to, $delimiter)
+    private function renderDateRange(int $toRender, DateTime $from, DateTime $to, $delimiter): string
     {
         $datePartRenderer = DateRangeRenderer::factory($this, $toRender);
         return $datePartRenderer->parseDateRange($this->dateParts, $from, $to, $delimiter);
@@ -271,9 +273,9 @@ class Date implements HasParent, RenderingObserver
      * @param string $format
      * @return bool
      */
-    private function hasDatePartsFromLocales($format)
+    private function hasDatePartsFromLocales(string $format): bool
     {
-        $dateXml = CiteProc::getContext()->getLocale()->getDateXml();
+        $dateXml = $this->locale->getDateXml();
         return !empty($dateXml[$format]);
     }
 
@@ -281,11 +283,11 @@ class Date implements HasParent, RenderingObserver
      * @param string $format
      * @return array
      */
-    private function getDatePartsFromLocales($format)
+    private function getDatePartsFromLocales(string $format): array
     {
         $ret = [];
         // date parts from locales
-        $dateFromLocale_ = CiteProc::getContext()->getLocale()->getDateXml();
+        $dateFromLocale_ = $this->locale->getDateXml();
         $dateFromLocale = $dateFromLocale_[$format];
 
         // no custom date parts within the date element (this)?
@@ -314,7 +316,7 @@ class Date implements HasParent, RenderingObserver
     /**
      * @return string
      */
-    public function getVariable()
+    public function getVariable(): string
     {
         return $this->variable;
     }
@@ -341,7 +343,7 @@ class Date implements HasParent, RenderingObserver
      * @param string $form
      * @throws InvalidStylesheetException
      */
-    private function prepareDatePartsChildren($dateParts, $form)
+    private function prepareDatePartsChildren($dateParts, string $form)
     {
         /* Localized date formats are selected with the optional form attribute, which must set to either “numeric”
         (for fully numeric formats, e.g. “12-15-2005”), or “text” (for formats with a non-numeric month, e.g.
@@ -375,18 +377,12 @@ class Date implements HasParent, RenderingObserver
         }
     }
 
-
-    private function renderNumeric(DateTime $date)
-    {
-        return $date->renderNumeric();
-    }
-
-    public function getForm()
+    public function getForm(): string
     {
         return $this->form;
     }
 
-    private function cleanDate($date)
+    private function cleanDate($date): array
     {
         $ret = [];
         foreach ($date as $key => $datePart) {
@@ -397,10 +393,10 @@ class Date implements HasParent, RenderingObserver
 
     /**
      * @param array $dateParts
-     * @param array $data_
+     * @param array $data
      * @return string
      */
-    private function iterateAndRenderDateParts(array $dateParts, array $data_)
+    private function iterateAndRenderDateParts(array $dateParts, array $data): string
     {
         $result = [];
         /** @var DatePart $datePart */
@@ -408,7 +404,7 @@ class Date implements HasParent, RenderingObserver
             /** @noinspection PhpUnusedLocalVariableInspection */
             list($f, $p) = explode("-", $key);
             if (in_array($p, $dateParts)) {
-                $result[] = $datePart->render($data_[0], $this);
+                $result[] = $datePart->render($data[0], $this);
             }
         }
         $result = array_filter($result);
@@ -420,7 +416,7 @@ class Date implements HasParent, RenderingObserver
     /**
      * @return bool
      */
-    private function datePartsHaveAffixes()
+    private function datePartsHaveAffixes(): bool
     {
         $result = $this->dateParts->filter(function (DatePart $datePart) {
             return !empty($datePart->getAffixes()->getSuffix()) || !empty($datePart->getAffixes()->getPrefix());

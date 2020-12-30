@@ -1,5 +1,6 @@
 <?php
-/**
+declare(strict_types=1);
+/*
  * citeproc-php
  *
  * @link        http://github.com/seboettg/citeproc-php for the source repository
@@ -14,14 +15,13 @@ use Seboettg\CiteProc\Locale\Locale;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Layout;
 use Seboettg\CiteProc\Rendering\Number\Number;
+use Seboettg\CiteProc\Styles\AffixesRenderer;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
 
 /**
  * Class DatePart
  * @package Seboettg\CiteProc\Rendering\Date
- *
- * @author Sebastian Böttger <seboettg@gmail.com>
  */
 class DatePart implements HasParent
 {
@@ -119,15 +119,7 @@ class DatePart implements HasParent
     /**
      * @return string
      */
-    public function getForm()
-    {
-        return $this->form;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -135,16 +127,16 @@ class DatePart implements HasParent
     /**
      * @return string
      */
-    public function getRangeDelimiter()
+    public function getRangeDelimiter(): string
     {
         return $this->rangeDelimiter;
     }
 
     /**
      * @param DateTime $date
-     * @return string|int
+     * @return string
      */
-    protected function renderYear(DateTime $date)
+    protected function renderYear(DateTime $date): string
     {
         $text = $date->getYear();
         if ($text > 0 && $text < 1000) {
@@ -155,14 +147,14 @@ class DatePart implements HasParent
             $text = $text . $this->locale->filter("terms", "bc")->single;
             return $text;
         }
-        return $text;
+        return (string) $text;
     }
 
     /**
      * @param DateTime $date
      * @return string
      */
-    protected function renderMonth(DateTime $date)
+    protected function renderMonth(DateTime $date): string
     {
         if ($date->getMonth() < 1 || $date->getMonth() > 12) {
             return "";
@@ -183,14 +175,14 @@ class DatePart implements HasParent
                 $text = $this->monthFromLocale($text, $form);
                 break;
         }
-        return $text;
+        return (string) $text;
     }
 
     /**
      * @param DateTime $date
-     * @return int|string
+     * @return string
      */
-    protected function renderDay(DateTime $date)
+    protected function renderDay(DateTime $date): string
     {
         if ($date->getDay() < 1 || $date->getDay() > 31) {
             return "";
@@ -211,7 +203,7 @@ class DatePart implements HasParent
                     $text = $this->number->ordinal($text);
                 }
         }
-        return $text;
+        return (string) $text;
     }
 
     /**
@@ -229,7 +221,7 @@ class DatePart implements HasParent
         return $text;
     }
 
-    public function getParent()
+    public function getParent(): Date
     {
         return $this->parent;
     }
@@ -239,7 +231,7 @@ class DatePart implements HasParent
         $this->parent = $parent;
     }
 
-    public function getAffixes()
+    public function getAffixes(): AffixesRenderer
     {
         return $this->stylesRenderer->getAffixes();
     }
