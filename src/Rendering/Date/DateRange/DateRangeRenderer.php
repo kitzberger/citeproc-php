@@ -1,8 +1,11 @@
 <?php
+declare(strict_types=1);
 /*
- * citeproc-php: DateRangeParser.php
- * User: Sebastian Böttger <sebastian.boettger@thomascook.de>
- * created at 03.11.19, 20:00
+ * citeproc-php
+ *
+ * @link        http://github.com/seboettg/citeproc-php for the source repository
+ * @copyright   Copyright (c) 2019 Sebastian Böttger.
+ * @license     https://opensource.org/licenses/MIT
  */
 
 namespace Seboettg\CiteProc\Rendering\Date\DateRange;
@@ -82,7 +85,7 @@ abstract class DateRangeRenderer
      * @param  $delimiter
      * @return string
      */
-    abstract public function parseDateRange(ArrayList $dateParts, DateTime $from, DateTime $to, $delimiter);
+    abstract public function parseDateRange(ArrayList $dateParts, DateTime $from, DateTime $to, $delimiter): string;
 
     /**
      * @param  DatePart $datePart

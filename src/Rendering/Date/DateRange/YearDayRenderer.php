@@ -1,8 +1,11 @@
 <?php
+declare(strict_types=1);
 /*
- * citeproc-php: DateRangeYearDayRenderer.php
- * User: Sebastian Böttger <sebastian.boettger@thomascook.de>
- * created at 03.11.19, 20:47
+ * citeproc-php
+ *
+ * @link        http://github.com/seboettg/citeproc-php for the source repository
+ * @copyright   Copyright (c) 2019 Sebastian Böttger.
+ * @license     https://opensource.org/licenses/MIT
  */
 
 namespace Seboettg\CiteProc\Rendering\Date\DateRange;
@@ -25,7 +28,7 @@ class YearDayRenderer extends DateRangeRenderer
      * @param $delimiter
      * @return string
      */
-    public function parseDateRange(ArrayList $dateParts, DateTime $from, DateTime $to, $delimiter)
+    public function parseDateRange(ArrayList $dateParts, DateTime $from, DateTime $to, $delimiter): string
     {
         $dp = $dateParts->toArray();
         $dateParts_ = [];

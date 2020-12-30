@@ -1,8 +1,11 @@
 <?php
+declare(strict_types=1);
 /*
- * citeproc-php: DateRangeMonthRenderer.php
- * User: Sebastian Böttger <sebastian.boettger@thomascook.de>
- * created at 03.11.19, 20:09
+ * citeproc-php
+ *
+ * @link        http://github.com/seboettg/citeproc-php for the source repository
+ * @copyright   Copyright (c) 2019 Sebastian Böttger.
+ * @license     https://opensource.org/licenses/MIT
  */
 
 namespace Seboettg\CiteProc\Rendering\Date\DateRange;
@@ -25,10 +28,9 @@ class MonthRenderer extends DateRangeRenderer
      * @param $delimiter
      * @return string
      */
-    public function parseDateRange(ArrayList $dateParts, DateTime $from, DateTime $to, $delimiter)
+    public function parseDateRange(ArrayList $dateParts, DateTime $from, DateTime $to, $delimiter): string
     {
         $ret = "";
-
         foreach ($dateParts as $key => $datePart) {
             if (strpos($key, "year") !== false) {
                 $ret .= $datePart->render($from, $this->parentDateObject);
