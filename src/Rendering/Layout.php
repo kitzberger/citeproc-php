@@ -115,11 +115,7 @@ class Layout implements RenderingObserver
         $ret = "";
         if (!empty($this->sorting)) {
             $this->setState(RenderingState::SORTING());
-            $clone = clone $this->citationItems->map(function ($element) {
-                return (is_array($element) ? array_clone($element) : (is_object($element) ? clone $element : $element));
-            });
             $this->sorting->sort($data);
-            $this->setCitationItems($clone);
             $this->setState(RenderingState::RENDERING());
         }
 
