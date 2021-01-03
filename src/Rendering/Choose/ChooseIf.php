@@ -11,13 +11,14 @@ declare(strict_types=1);
 namespace Seboettg\CiteProc\Rendering\Choose;
 
 use Seboettg\CiteProc\Constraint\Constraint;
-use Seboettg\CiteProc\Constraint\Factory;
+use Seboettg\CiteProc\Constraint\Factory as ConstraintFactory;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Exception\ClassNotFoundException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Group;
 use Seboettg\CiteProc\Rendering\HasParent;
 use Seboettg\CiteProc\Rendering\Rendering;
+use Seboettg\CiteProc\Util\Factory;
 use Seboettg\Collection\ArrayList;
 use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
@@ -65,7 +66,7 @@ class ChooseIf implements Rendering, HasParent
         }
         foreach ($node->attributes() as $name => $value) {
             if ('match' !== $name) {
-                $constraints->append(Factory::createConstraint((string) $name, (string) $value, $match));
+                $constraints->append(ConstraintFactory::createConstraint((string) $name, (string) $value, $match));
             }
         }
         $chooseIf = new self($constraints, $children, $match, $parent);

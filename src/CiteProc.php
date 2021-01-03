@@ -15,6 +15,7 @@ use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Util\CiteProcHelper;
 use Seboettg\CiteProc\Util\Parser;
 use Seboettg\CiteProc\Util\Renderer;
+use Seboettg\Collection\ArrayList;
 
 /**
  * Class CiteProc
@@ -79,7 +80,6 @@ class CiteProc implements CiteProcInterface
         $this->markupExtension = $markupExtension;
         self::$context = new Context();
         $this->parser = new Parser();
-        $this->renderer = new Renderer();
     }
 
     public function __destruct()
@@ -141,6 +141,12 @@ class CiteProc implements CiteProcInterface
             $this->parser->parseStylesheet(($this->styleSheet)());
             $this->styleSheetParsed = true;
         }
+        $this->renderer = new Renderer(
+            self::$context->getBibliography(),
+            self::$context->getCitation(),
+            self::$context->getBibliographySpecificOptions()
+        );
+        self::$context->addObserver($this->renderer);
         return $this;
     }
 

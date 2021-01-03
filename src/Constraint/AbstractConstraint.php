@@ -1,8 +1,11 @@
-<?php /** @noinspection PhpUnused */
+<?php
+declare(strict_types=1);
 /*
- * citeproc-php: AbstractConstraint.php
- * User: Sebastian Böttger <sebastian.boettger@thomascook.de>
- * created at 26.10.19, 14:12
+ * citeproc-php
+ *
+ * @link        http://github.com/seboettg/citeproc-php for the source repository
+ * @copyright   Copyright (c) 2019 Sebastian Böttger.
+ * @license     https://opensource.org/licenses/MIT
  */
 
 namespace Seboettg\CiteProc\Constraint;
@@ -16,42 +19,36 @@ use stdClass;
  */
 abstract class AbstractConstraint implements Constraint
 {
-
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $match;
 
-    /**
-     * @var array
-     */
+    /** @var false|string[] */
     protected $conditionVariables;
 
     /**
      * @param string $variable
-     * @param stdClass $data;
+     * @param stdClass $data ;
      * @return bool
      */
-    abstract protected function matchForVariable($variable, $data);
+    abstract protected function matchForVariable(string $variable, stdClass $data): bool;
 
     /**
      * Variable constructor.
      * @param string $value
      * @param string $match
      */
-    /** @noinspection PhpUnused */
-    public function __construct($value, $match = "any")
+    public function __construct(string $value, string $match = "any")
     {
         $this->conditionVariables = explode(" ", $value);
         $this->match = $match;
     }
 
     /**
-     * @param $value
+     * @param stdClass $value
      * @param int|null $citationNumber
      * @return bool
      */
-    public function validate($value, $citationNumber = null)
+    public function validate(stdClass $value, int $citationNumber = null): bool
     {
         switch ($this->match) {
             case Constraint::MATCH_ALL:
@@ -64,7 +61,7 @@ abstract class AbstractConstraint implements Constraint
         }
     }
 
-    private function matchAny($value)
+    private function matchAny($value): bool
     {
         $conditionMatched = false;
         foreach ($this->conditionVariables as $variable) {
@@ -73,7 +70,7 @@ abstract class AbstractConstraint implements Constraint
         return (bool) $conditionMatched;
     }
 
-    private function matchAll($value)
+    private function matchAll($value): bool
     {
         $conditionMatched = true;
         foreach ($this->conditionVariables as $variable) {

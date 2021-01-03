@@ -10,20 +10,49 @@ declare(strict_types=1);
 
 namespace Seboettg\CiteProc\Util;
 
-use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Config;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Exception\CiteProcException;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
+use Seboettg\CiteProc\Style\Bibliography;
+use Seboettg\CiteProc\Style\Citation;
+use Seboettg\CiteProc\Style\Options\BibliographyOptions;
 use Seboettg\CiteProc\Styles\Css\CssStyle;
 use Seboettg\Collection\ArrayList;
 
-class Renderer
+class Renderer implements RenderingObserver
 {
+    use RenderingObserverTrait;
+
+    /** @var CssStyle */
+    private $cssStyle;
+
+    /** @var BibliographyOptions */
+    private $bibliographySpecificOptions;
+
+    /** @var Bibliography */
+    private $bibliography;
+
+    /** @var Citation */
+    private $citation;
+
+    public function __construct(
+        ?Bibliography $bibliography,
+        ?Citation $citation,
+        ?BibliographyOptions $bibliographySpecificOptions
+    ) {
+        $this->bibliography = $bibliography;
+        $this->citation = $citation;
+        $this->bibliographySpecificOptions = $bibliographySpecificOptions;
+        $this->initObserver();
+    }
+
     /**
      * @param array|DataList $data
      * @param Config\RenderingMode $mode
      * @param array|ArrayList $citationItems
-     * @return string
+     * @return string|array
      * @throws CiteProcException
      */
     public function render($data, Config\RenderingMode $mode, $citationItems = [])
@@ -41,53 +70,51 @@ class Renderer
                 '`citationItems`, ' .
                 'array or ArrayList expected.');
         }
+        $this->setCitationData($data);
         switch ((string)$mode) {
             case Config\RenderingMode::BIBLIOGRAPHY:
-                CiteProc::getContext()->setMode($mode);
+                $this->setMode($mode);
                 // set CitationItems to Context
-                CiteProc::getContext()->setCitationData($data);
+                $this->setCitationData($data);
                 $res = $this->bibliography($data);
                 break;
             case Config\RenderingMode::CITATION:
-                CiteProc::getContext()->setMode($mode);
+                $this->setMode($mode);
                 // set CitationItems to Context
-                CiteProc::getContext()->setCitationItems($citationItems);
-                $res = $this->citation($data, $citationItems);
+                $this->setCitationItems($citationItems);
+                $res = $this->citation($data);
         }
-        //CiteProc::setContext(null);
         return $res;
     }
 
     /**
      * @return string
      */
-    public function renderCssStyles()
+    public function renderCssStyles(): string
     {
         $res = "";
-        if (CiteProc::getContext()->getCssStyle() == null && !empty(CiteProc::getContext()->getBibliographySpecificOptions())) {
-            $cssStyle = new CssStyle(CiteProc::getContext()->getBibliographySpecificOptions());
-            CiteProc::getContext()->setCssStyle($cssStyle);
-            $res = $cssStyle->render();
+        if (null === $this->cssStyle && !empty($this->bibliographySpecificOptions)) {
+            $this->cssStyle = new CssStyle($this->bibliographySpecificOptions);
+            $res = $this->cssStyle->render();
         }
         return $res;
     }
 
     /**
      * @param DataList $data
-     * @return string
+     * @return string|array
      */
-    protected function bibliography(DataList $data): string
+    protected function bibliography(DataList $data)
     {
-        return CiteProc::getContext()->getBibliography()->render($data);
+        return $this->bibliography->render($data);
     }
 
     /**
      * @param DataList $data
-     * @param ArrayList $citationItems
-     * @return string
+     * @return string|array
      */
-    protected function citation(DataList $data, ArrayList $citationItems)
+    protected function citation(DataList $data)
     {
-        return CiteProc::getContext()->getCitation()->render($data, $citationItems);
+        return $this->citation->render($data);
     }
 }

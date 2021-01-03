@@ -12,8 +12,12 @@ namespace Seboettg\CiteProc\Style;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Data\DataList;
+use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
 use Seboettg\CiteProc\Rendering\Layout;
+use Seboettg\CiteProc\Rendering\Observer\CitationDataChangedEvent;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Style\Options\BibliographyOptions;
 use Seboettg\CiteProc\Style\Options\NameOptions;
@@ -32,8 +36,9 @@ use SimpleXMLElement;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Bibliography extends StyleElement
+class Bibliography extends StyleElement implements RenderingObserver
 {
+    use RenderingObserverTrait;
 
     /** @var BibliographyOptions */
     private $bibliographyOptions;
@@ -69,6 +74,7 @@ class Bibliography extends StyleElement
         }
         $bibliography->setLayout($layout);
         $bibliography->setParent($parent);
+        CiteProc::getContext()->addObserver($bibliography);
         return $bibliography;
     }
 
@@ -81,12 +87,14 @@ class Bibliography extends StyleElement
     {
         $this->nameOptions = $nameOptions;
         $this->bibliographyOptions = $bibliographyOptions;
+        $this->initObserver();
     }
 
     /**
      * @param array|DataList $data
      * @param int|null $citationNumber
-     * @return string
+     * @return string|array
+     * @throws CiteProcException
      */
     public function render($data, $citationNumber = null)
     {
@@ -95,12 +103,11 @@ class Bibliography extends StyleElement
         $subsequentAuthorSubstituteRule = $this->bibliographyOptions->getSubsequentAuthorSubstituteRule();
 
         if ($subsequentAuthorSubstitute !== null && !empty($subsequentAuthorSubstituteRule)) {
-            CiteProc::getContext()
-                ->getCitationData()
+            $this->citationData
                 ->setSubsequentAuthorSubstitute($subsequentAuthorSubstitute);
-            CiteProc::getContext()
-                ->getCitationData()
+            $this->citationData
                 ->setSubsequentAuthorSubstituteRule($subsequentAuthorSubstituteRule);
+            $this->notifyAll(new CitationDataChangedEvent($this->citationData));
         }
         return $this->layout->render($data, $citationNumber);
     }

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -9,16 +10,16 @@
 
 namespace Seboettg\CiteProc\Constraint;
 
+use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Exception\ClassNotFoundException;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
 use function Seboettg\CiteProc\ucfirst;
 
 /**
  * Class Factory
  * @package Seboettg\CiteProc\Constraint
- *
- * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Factory extends \Seboettg\CiteProc\Util\Factory
+abstract class Factory
 {
     const NAMESPACE_CONSTRAINTS = "Seboettg\\CiteProc\\Constraint\\";
 
@@ -26,10 +27,10 @@ class Factory extends \Seboettg\CiteProc\Util\Factory
      * @param string $name
      * @param string $value
      * @param string $match
-     * @return mixed
+     * @return Constraint
      * @throws ClassNotFoundException
      */
-    public static function createConstraint(string $name, string $value, string $match)
+    public static function createConstraint(string $name, string $value, string $match): Constraint
     {
         $parts = explode("-", $name);
         $className = implode("", array_map(function (string $part) {
@@ -40,6 +41,10 @@ class Factory extends \Seboettg\CiteProc\Util\Factory
         if (!class_exists($className)) {
             throw new ClassNotFoundException($className);
         }
-        return new $className($value, $match);
+        $constraint = new $className($value, $match);
+        if ($constraint instanceof RenderingObserver) {
+            CiteProc::getContext()->addObserver($constraint);
+        }
+        return $constraint;
     }
 }

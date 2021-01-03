@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -9,7 +10,9 @@
 
 namespace Seboettg\CiteProc\Constraint;
 
-use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Config\RenderingMode;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use stdClass;
 
 /**
@@ -19,18 +22,29 @@ use stdClass;
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
 /** @noinspection PhpUnused */
-class Variable extends AbstractConstraint
+class Variable extends AbstractConstraint implements RenderingObserver
 {
+    use RenderingObserverTrait;
+
+    public function __construct(string $value, string $match = "any")
+    {
+        parent::__construct($value, $match);
+        $this->initObserver();
+    }
+
     /**
      * @param string $variable
      * @param stdClass $data
      * @return bool
      */
-    protected function matchForVariable($variable, $data)
+    protected function matchForVariable(string $variable, stdClass $data): bool
     {
         $variableExistInCitationItem = false;
-        if (CiteProc::getContext()->isModeCitation() && isset($data->id)) {
-            $citationItem = CiteProc::getContext()->getCitationItemById($data->id);
+        if ($this->mode->equals(RenderingMode::CITATION()) && isset($data->id)) {
+            $id = $data->id;
+            $citationItem = $this->citationItems->filter(function ($item) use ($id) {
+                return $item->id === $id;
+            })->current();
             if (!empty($citationItem)) {
                 $variableExistInCitationItem = !empty($citationItem->{$variable});
             }

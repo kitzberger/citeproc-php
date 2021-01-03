@@ -18,6 +18,7 @@ use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Rendering\Rendering;
 use Seboettg\CiteProc\Styles\StylesRenderer;
 use SimpleXMLElement;
+use function Seboettg\CiteProc\getCurrentById;
 
 /**
  * Class Label
@@ -110,7 +111,7 @@ class Label implements Rendering, RenderingObserver
         $lang = (isset($data->language) && $data->language != 'en') ? $data->language : 'en';
         $this->stylesRenderer->getTextCase()->setLanguage($lang);
         $text = '';
-        $variables = explode(' ', $this->variable);
+        $variables = null !== $this->variable ? explode(' ', $this->variable) : [];
         $form = !empty($this->form) ? $this->form : 'long';
         $plural = $this->defaultPlural();
 
@@ -125,9 +126,7 @@ class Label implements Rendering, RenderingObserver
             }
         } elseif ($this->variable === "locator") {
             $id = $data->id;
-            $citationItem = $this->citationItems->filter(function ($item) use ($id) {
-                return $item->id === $id;
-            })->current();
+            $citationItem = getCurrentById($this->citationItems, $id);
             if (!empty($citationItem->label)) {
                 $plural = $this->evaluateStringPluralism($citationItem->locator, $citationItem->label);
                 $term = $this->locale->filter('terms', $citationItem->label, (string)$form);

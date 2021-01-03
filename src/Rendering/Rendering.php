@@ -27,5 +27,5 @@ interface Rendering
      * @param int|null $citationNumber
      * @return string|array
      */
-    public function render($data, $citationNumber = []);
+    public function render($data, $citationNumber);
 }

@@ -14,7 +14,9 @@ use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Data\DataList;
 use Seboettg\CiteProc\Config\RenderingState;
+use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Exception\InvalidStylesheetException;
+use Seboettg\CiteProc\Rendering\Observer\CitedItemsChangedEvent;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
 use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
 use Seboettg\CiteProc\Rendering\Observer\StateChangedEvent;
@@ -29,6 +31,7 @@ use Seboettg\Collection\ArrayList as ArrayList;
 use Seboettg\Collection\ArrayList\ArrayListInterface;
 use SimpleXMLElement;
 use stdClass;
+use function Seboettg\CiteProc\array_clone;
 
 /**
  * Class Layout
@@ -37,7 +40,7 @@ use stdClass;
  *
  * @author Sebastian Böttger <seboettg@gmail.com>
  */
-class Layout implements Rendering, RenderingObserver
+class Layout implements RenderingObserver
 {
     use ConsecutivePunctuationCharacterTrait,
         RenderingObserverTrait;
@@ -103,17 +106,21 @@ class Layout implements Rendering, RenderingObserver
     }
 
     /**
-     * @param  array|DataList  $data
-     * @param  array|ArrayList $citationItems
+     * @param array|DataList $data
      * @return string|array
+     * @throws CiteProcException
      */
-    public function render($data, $citationItems = [])
+    public function render($data)
     {
         $ret = "";
         if (!empty($this->sorting)) {
-            $this->notifyAll(new StateChangedEvent(RenderingState::SORTING()));
+            $this->setState(RenderingState::SORTING());
+            $clone = clone $this->citationItems->map(function ($element) {
+                return (is_array($element) ? array_clone($element) : (is_object($element) ? clone $element : $element));
+            });
             $this->sorting->sort($data);
-            $this->notifyAll(new StateChangedEvent(RenderingState::RENDERING()));
+            $this->setCitationItems($clone);
+            $this->setState(RenderingState::RENDERING());
         }
 
         if ($this->mode->equals(RenderingMode::BIBLIOGRAPHY())) {
@@ -127,11 +134,11 @@ class Layout implements Rendering, RenderingObserver
             $ret = StringHelper::clearApostrophes($ret);
             return sprintf("<div class=\"csl-bib-body\">%s\n</div>", $ret);
         } elseif ($this->mode->equals(RenderingMode::CITATION())) {
-            if ($citationItems->count() > 0) { //is there a filter for specific citations?
-                if ($this->isGroupedCitations($citationItems)) { //if citation items grouped?
-                    return $this->renderGroupedCitations($data, $citationItems);
+            if ($this->citationItems->count() > 0) { //is there a filter for specific citations?
+                if ($this->isGroupedCitations($this->citationItems)) { //if citation items grouped?
+                    return $this->renderGroupedCitations($data, $this->citationItems);
                 } else {
-                    $data = $this->filterCitationItems($data, $citationItems);
+                    $data = $this->filterCitationItems($data, $this->citationItems);
                     $ret = $this->renderCitations($data, $ret);
                 }
             } else {
@@ -230,7 +237,8 @@ class Layout implements Rendering, RenderingObserver
             $renderedItem = $this->renderSingle($item, $citationNumber);
             $renderedItem = CiteProcHelper::applyAdditionMarkupFunction($item, "csl-entry", $renderedItem);
             CiteProc::getContext()->getResults()->append($renderedItem);
-            CiteProc::getContext()->appendCitedItem($item);
+            $this->citedItems->append($item);
+            $this->notifyAll(new CitedItemsChangedEvent($this->citedItems));
         }
         $ret .= implode($this->delimiter, CiteProc::getContext()->getResults()->toArray());
         return $ret;
@@ -239,9 +247,9 @@ class Layout implements Rendering, RenderingObserver
     /**
      * @param DataList $data
      * @param ArrayListInterface $citationItems
-     * @return mixed
+     * @return ArrayListInterface
      */
-    private function filterCitationItems(DataList $data, ArrayListInterface $citationItems)
+    private function filterCitationItems(DataList $data, ArrayListInterface $citationItems): ArrayListInterface
     {
         return $data->filter(function ($dataItem) use ($citationItems) {
             foreach ($citationItems as $citationItem) {

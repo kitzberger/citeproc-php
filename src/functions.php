@@ -102,11 +102,19 @@ function loadLocalesMetadata()
 /**
  * @param ArrayListInterface $list
  * @param mixed $id
- * @return false|mixed
+ * @return mixed
  */
 function getCurrentById(ArrayListInterface $list, $id)
 {
-    return $list->filter(function ($item) use ($id) {
+    $l = $list->filter(function ($item) use ($id) {
         return $item->id === $id;
-    })->current();
+    });
+    return $l->current();
+}
+
+function array_clone($array): array
+{
+    return array_map(function ($element) {
+        return is_array($element) ? array_clone($element) : (is_object($element) ? clone $element : $element);
+    }, $array);
 }

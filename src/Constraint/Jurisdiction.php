@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -8,6 +9,8 @@
  */
 
 namespace Seboettg\CiteProc\Constraint;
+
+use stdClass;
 
 /**
  * Class Jurisdiction
@@ -24,7 +27,7 @@ class Jurisdiction implements Constraint
      * @param int|null $citationNumber
      * @return bool
      */
-    public function validate($value, $citationNumber = null)
+    public function validate(stdClass $value, int $citationNumber = null): bool
     {
         return false;
     }

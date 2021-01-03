@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -26,7 +27,7 @@ class CssStyle
     /**
      * @var CssRules
      */
-    private $cssRules = null;
+    private $cssRules;
 
     /**
      * CssStyle constructor.
@@ -43,7 +44,7 @@ class CssStyle
      * renders CSS output
      * @return string
      */
-    public function render()
+    public function render(): string
     {
         return implode("\n", array_filter($this->cssRules->toArray()));
     }

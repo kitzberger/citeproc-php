@@ -12,6 +12,7 @@ namespace Seboettg\CiteProc\Style;
 use Seboettg\CiteProc\CiteProc;
 use Seboettg\CiteProc\Config\RenderingMode;
 use Seboettg\CiteProc\Data\DataList;
+use Seboettg\CiteProc\Exception\CiteProcException;
 use Seboettg\CiteProc\Rendering\Layout;
 use Seboettg\CiteProc\Root\Root;
 use Seboettg\CiteProc\Style\Options\CitationOptions;
@@ -76,11 +77,11 @@ class Citation extends StyleElement
 
     /**
      * @param array|DataList $data
-     * @param ArrayListInterface $citationItems
-     * @return string
+     * @return mixed
+     * @throws CiteProcException
      */
-    public function render($data, ArrayListInterface $citationItems)
+    public function render($data)
     {
-        return $this->layout->render($data, $citationItems);
+        return $this->layout->render($data);
     }
 }

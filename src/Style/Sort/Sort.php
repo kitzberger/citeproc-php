@@ -71,7 +71,7 @@ class Sort
      *
      * @param DataList|array $data reference
      */
-    public function sort(&$data)
+    public function sort($data)
     {
         if (is_array($data)) {
             $data = new DataList(...$data);

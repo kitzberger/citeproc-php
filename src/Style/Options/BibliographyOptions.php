@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -12,7 +13,7 @@ namespace Seboettg\CiteProc\Style\Options;
 use SimpleXMLElement;
 
 /**
- * Class GlobalOptionsTrait
+ * Class BibliographyOptions
  * @package Seboettg\CiteProc\Style
  * @author Sebastian Böttger <seboettg@gmail.com>
  */

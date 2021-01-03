@@ -31,6 +31,9 @@ trait RenderingObserverTrait
     /** @var DataList */
     private $citationData;
 
+    /** @var ArrayListInterface */
+    private $citedItems;
+
     /** @var Context */
     private $context;
 
@@ -40,6 +43,8 @@ trait RenderingObserverTrait
         $this->state = RenderingState::RENDERING();
         $this->citationItems = new ArrayList();
         $this->citationData = new DataList();
+        $this->citationItems = new ArrayList();
+        $this->citedItems = new ArrayList();
     }
 
     public function notify(RenderingEvent $event): void
@@ -56,6 +61,14 @@ trait RenderingObserverTrait
         if ($event instanceof CitationDataChangedEvent) {
             $this->citationData = $event->getCitationData();
         }
+        if ($event instanceof CitedItemsChangedEvent) {
+            $this->citedItems = $event->getCitedItems();
+        }
+    }
+
+    public function setContext(Context $context): void
+    {
+        $this->context = $context;
     }
 
     public function notifyAll(RenderingEvent $event): void
@@ -63,8 +76,42 @@ trait RenderingObserverTrait
         $this->context->notifyObservers($event);
     }
 
-    public function setContext(Context $context): void
+    /**
+     * @param RenderingState $state
+     */
+    public function setState(RenderingState $state): void
     {
-        $this->context = $context;
+        $this->state = $state;
+        $this->notifyAll(new StateChangedEvent($state));
+    }
+
+    protected function setMode(RenderingMode $mode)
+    {
+        $this->mode = $mode;
+        $this->notifyAll(new ModeChangedEvent($mode));
+    }
+
+    protected function setCitationData(DataList $citationData)
+    {
+        $this->citationData = $citationData;
+        $this->notifyAll(new CitationDataChangedEvent($citationData));
+    }
+
+    /**
+     * @param ArrayListInterface $citedItems
+     */
+    public function setCitedItems(ArrayListInterface $citedItems): void
+    {
+        $this->citedItems = $citedItems;
+        $this->notifyAll(new CitedItemsChangedEvent($citedItems));
+    }
+
+    /**
+     * @param ArrayListInterface $citationItems
+     */
+    public function setCitationItems(ArrayListInterface $citationItems): void
+    {
+        $this->citationItems = $citationItems;
+        $this->notifyAll(new CitationItemsChangedEvent($citationItems));
     }
 }

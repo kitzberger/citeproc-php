@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * citeproc-php
  *
@@ -9,7 +10,10 @@
 
 namespace Seboettg\CiteProc\Constraint;
 
-use Seboettg\CiteProc\CiteProc;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserver;
+use Seboettg\CiteProc\Rendering\Observer\RenderingObserverTrait;
+use stdClass;
+use function Seboettg\CiteProc\getCurrentById;
 
 /**
  * Class Locator
@@ -17,22 +21,26 @@ use Seboettg\CiteProc\CiteProc;
  * Tests whether the locator matches the given locator types (see Locators). Use “sub-verbo” to test for the
  * “sub verbo” locator type.
  *
- * @codeCoverageIgnore
- *
  * @package Seboettg\CiteProc\Constraint
- *
- * @author Sebastian Böttger <seboettg@gmail.com>
  */
-/** @noinspection PhpUnused */
-class Locator extends AbstractConstraint
+class Locator extends AbstractConstraint implements RenderingObserver
 {
+    use RenderingObserverTrait;
+
+    public function __construct(string $value, string $match = "any")
+    {
+        parent::__construct($value, $match);
+        $this->initObserver();
+    }
+
     /**
      * @inheritDoc
      */
-    protected function matchForVariable($variable, $data)
+    protected function matchForVariable(string $variable, stdClass $data): bool
     {
         if (!empty($data->id)) {
-            $citationItem = CiteProc::getContext()->getCitationItemById($data->id);
+            $id = $data->id;
+            $citationItem = getCurrentById($this->citationItems, $id);
             return !empty($citationItem) && !empty($citationItem->label) && $citationItem->label === $variable;
         }
         return false;
