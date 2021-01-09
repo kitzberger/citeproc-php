@@ -142,7 +142,7 @@ class Name implements HasParent, RenderingObserver
      */
     public function render(stdClass $data, string $var, ?int $citationNumber = null)
     {
-        $this->nameOptions = $this->nameOptionsArray[(string)CiteProc::getContext()->getMode()];
+        $this->nameOptions = $this->nameOptionsArray[(string)$this->mode];
         $this->nameOrderRenderer->setNameOptions($this->nameOptions);
         $this->delimiter = $this->nameOptions->getNameDelimiter() ?? $this->delimiter;
         $this->variable = $var;
@@ -553,14 +553,6 @@ class Name implements HasParent, RenderingObserver
     public function getForm(): string
     {
         return $this->nameOptions->getForm();
-    }
-
-    /**
-     * @param mixed $delimiter
-     */
-    public function setDelimiter($delimiter)
-    {
-        $this->delimiter = $delimiter;
     }
 
     /**
