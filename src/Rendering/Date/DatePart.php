@@ -197,8 +197,7 @@ class DatePart implements HasParent
                 $text = sprintf("%02d", $text);
                 break;
             case 'ordinal':
-                $limitDayOrdinals =
-                    CiteProc::getContext()->getLocale()->filter("options", "limit-day-ordinals-to-day-1");
+                $limitDayOrdinals = $this->locale->filter("options", "limit-day-ordinals-to-day-1");
                 if (!$limitDayOrdinals || Layout::getNumberOfCitedItems() <= 1) {
                     $text = $this->number->ordinal($text);
                 }
