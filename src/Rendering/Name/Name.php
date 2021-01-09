@@ -344,7 +344,7 @@ class Name implements HasParent, RenderingObserver
                     $this->etAl = $this->parent->getEtAl()->render(null);
                     return $resultNames;
                 } else {
-                    $this->etAl = CiteProc::getContext()->getLocale()->filter('terms', 'et-al')->single;
+                    $this->etAl = $this->locale->filter('terms', 'et-al')->single;
                     return $resultNames;
                 }
             }
