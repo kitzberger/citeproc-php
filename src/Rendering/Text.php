@@ -113,8 +113,8 @@ class Text implements Rendering
                     unset($data->{$this->toRenderTypeValue});
                 }
                 if (!CiteProcHelper::isUsingAffixesByMarkupExtentsion($data, $this->toRenderTypeValue)) {
-					$renderedText = $this->applyAdditionalMarkupFunction($data, $renderedText);
-				}
+                    $renderedText = $this->applyAdditionalMarkupFunction($data, $renderedText);
+                }
                 break;
             case 'macro':
                 $renderedText = $this->renderMacro($data);
@@ -135,7 +135,7 @@ class Text implements Rendering
     /**
      * @return string
      */
-    public function getSource()
+    public function getSource(): string
     {
         return $this->toRenderType;
     }
@@ -143,12 +143,12 @@ class Text implements Rendering
     /**
      * @return string
      */
-    public function getVariable()
+    public function getVariable(): string
     {
         return $this->toRenderTypeValue;
     }
 
-    private function renderPage($page)
+    private function renderPage($page): string
     {
         if (preg_match(NumberHelper::PATTERN_COMMA_AMPERSAND_RANGE, $page)) {
             $page = $this->normalizeDateRange($page);
@@ -169,7 +169,7 @@ class Text implements Rendering
         return $page;
     }
 
-    private function renderLocator($data, $citationNumber)
+    private function renderLocator($data, $citationNumber): string
     {
         $citationItem = CiteProc::getContext()->getCitationItemById($data->id);
         if (!empty($citationItem->label)) {
@@ -185,7 +185,7 @@ class Text implements Rendering
         return isset($citationItem->locator) ? trim($citationItem->locator) : '';
     }
 
-    private function normalizeDateRange($page)
+    private function normalizeDateRange($page): string
     {
         if (preg_match("/^(\d+)\s?--?\s?(\d+)$/", trim($page), $matches)) {
             return $matches[1]."-".$matches[2];
@@ -196,9 +196,9 @@ class Text implements Rendering
     /**
      * @param  $data
      * @param  $renderedText
-     * @return mixed
+     * @return string
      */
-    private function applyAdditionalMarkupFunction($data, $renderedText)
+    private function applyAdditionalMarkupFunction($data, $renderedText): string
     {
         return CiteProcHelper::applyAdditionMarkupFunction($data, $this->toRenderTypeValue, $renderedText);
     }
@@ -208,7 +208,7 @@ class Text implements Rendering
      * @param  $lang
      * @return string
      */
-    private function renderVariable($data, $lang)
+    private function renderVariable($data, $lang): string
     {
         // check if there is an attribute with prefix short or long e.g. shortTitle or longAbstract
         // test case group_ShortOutputOnly.json
@@ -241,17 +241,17 @@ class Text implements Rendering
     }
 
     /**
-	 * @param  $data
-	 * @param  $renderedText
+     * @param  $data
+     * @param  $renderedText
      * @return string
      */
-    private function formatRenderedText($data, $renderedText)
+    private function formatRenderedText($data, $renderedText): string
     {
         $text = $this->format($renderedText);
         $res = $this->addAffixes($text);
-		if (CiteProcHelper::isUsingAffixesByMarkupExtentsion($data, $this->toRenderTypeValue)) {
-			$res = $this->applyAdditionalMarkupFunction($data, $res);
-		}
+        if (CiteProcHelper::isUsingAffixesByMarkupExtentsion($data, $this->toRenderTypeValue)) {
+            $res = $this->applyAdditionalMarkupFunction($data, $res);
+        }
         if (!empty($res)) {
             $res = $this->removeConsecutiveChars($res);
         }
@@ -267,15 +267,14 @@ class Text implements Rendering
     private function renderCitationNumber($data, $citationNumber)
     {
         $renderedText = $citationNumber + 1;
-        $renderedText = $this->applyAdditionalMarkupFunction($data, $renderedText);
-        return $renderedText;
+        return $this->applyAdditionalMarkupFunction($data, $renderedText);
     }
 
     /**
      * @param  $data
      * @return string
      */
-    private function renderMacro($data)
+    private function renderMacro($data): string
     {
         $macro = CiteProc::getContext()->getMacro($this->toRenderTypeValue);
         if (is_null($macro)) {
